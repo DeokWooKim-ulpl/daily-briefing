@@ -124,23 +124,33 @@ python -m http.server 8080 --directory docs
 - **GitHub Pages**: 저장소 안의 `docs/` 폴더를 그대로 웹사이트로 공개해 주는 기능. 앱 주소가 여기서 나옵니다.
 - **Secrets**: API 키처럼 코드에 적으면 안 되는 값을 GitHub에 따로 보관하는 금고.
 
-### 2-1. 계정과 저장소 만들기
+### 2-1. GitHub 계정 + GitHub Desktop 설치
 1. https://github.com 가입/로그인.
-2. 오른쪽 위 **+ → New repository**.
-3. Repository name: `news-brief` (다른 이름도 됨, 아래 설명에서 `news-brief` 자리에 그 이름을 넣으면 됨).
-4. **Public** 선택. (Pages를 무료로 쓰려면 Public이어야 합니다. 뉴스 요약 JSON과 앱 코드가 공개되지만 API 키는 올라가지 않으니 괜찮습니다. 꼭 비공개로 하고 싶으면 아래 "비공개로 하려면" 참고.)
-5. 나머지는 건드리지 말고 **Create repository**.
+2. https://desktop.github.com 에서 **GitHub Desktop** 설치 → 실행 → GitHub 계정으로 로그인.
 
-### 2-2. 파일 올리기 (GitHub Desktop 사용, 가장 쉬움)
-1. https://desktop.github.com 에서 GitHub Desktop 설치 → GitHub 계정으로 로그인.
-2. **File → Add local repository** → 이 폴더(`뉴스브리핑 앱`) 선택.
-   - "This directory does not appear to be a Git repository" 가 뜨면 **create a repository** 링크 클릭 → 그대로 **Create Repository**.
-3. 왼쪽 아래 Summary 칸에 `first` 입력 → **Commit to main**.
-4. 위쪽 **Publish repository** → Name `news-brief`, **"Keep this code private" 체크 해제** → Publish.
-5. 브라우저로 `https://github.com/내아이디/news-brief` 를 열어 파일들이 보이면 성공.
+> GitHub 웹사이트에서 저장소를 **미리 만들 필요 없습니다.** 아래 2-2의 "Publish" 버튼이 저장소를 자동으로 만들어 줍니다.
+> (웹에서 이미 만들어 버렸다면 → 아래 "이미 웹에서 저장소를 만든 경우" 참고)
+
+### 2-2. 이 폴더를 GitHub에 올리기 (GitHub Desktop)
+1. GitHub Desktop에서 **File → Add local repository** → **Choose...** → 이 폴더(`뉴스브리핑 앱`) 선택 → **Add repository**.
+   - "This directory does not appear to be a Git repository" 라는 파란 안내가 뜨면 그 안의 **create a repository** 링크 클릭 → 뜨는 창에서 아무것도 바꾸지 말고 **Create Repository**.
+   - 이 시점에는 왼쪽 목록의 **"Other"** 그룹 아래에 폴더 이름으로 나타납니다. "Other"는 *아직 GitHub와 연결 안 된 내 컴퓨터의 저장소* 라는 뜻이라 정상입니다. 다음 단계에서 연결되면 내 계정 이름 아래로 옮겨집니다.
+2. 위쪽 가운데 파란 버튼 **Publish repository** 클릭.
+   - Name: `daily-briefing` (원하는 이름. 아래 설명의 `daily-briefing` 자리에 그 이름을 넣으면 됨)
+   - **"Keep this code private" 체크 해제** ← 중요. Pages를 무료로 쓰려면 Public이어야 합니다. 앱 코드와 뉴스 요약은 공개되지만 API 키는 올라가지 않습니다. 꼭 비공개로 하려면 아래 "비공개로 하려면" 참고.
+   - **Publish repository**.
+3. 브라우저로 `https://github.com/내아이디/daily-briefing` 를 열어 파일들이 보이면 성공.
    - **확인**: `pipeline` 폴더 안에 `.env` 가 **없어야** 정상입니다 (`.env.example`만 있음).
 
-> 명령어가 편하면 GitHub Desktop 대신: 터미널에서 `git init` → `git add .` → `git commit -m first` → `git branch -M main` → `git remote add origin https://github.com/내아이디/news-brief.git` → `git push -u origin main`
+#### 이미 웹에서 저장소를 만든 경우 (예: `daily-briefing`을 웹에서 먼저 만듦)
+"Publish"를 하면 같은 이름이라 실패하거나 다른 이름으로 하나 더 생깁니다. 대신 **기존 저장소에 연결**합니다:
+1. 위 2-2의 1번까지 똑같이 한다 (폴더 추가 → create a repository).
+2. 메뉴 **Repository → Repository settings... → 왼쪽 Remote** → **Primary remote repository (origin)** 칸에
+   `https://github.com/내아이디/daily-briefing.git` 입력 → **Save**.
+3. 위쪽 가운데 버튼이 **Push origin** 으로 바뀌면 클릭. (안 바뀌면 GitHub Desktop을 껐다 켠다)
+4. 웹에서 빈 저장소를 **Clone** 해 둔 게 있다면 그건 필요 없습니다. GitHub Desktop 왼쪽 목록에서 그 항목을 오른쪽 클릭 → **Remove** (컴퓨터에서 폴더까지 지우려면 "Also move this repository to Recycle Bin" 체크).
+
+> 명령어가 편하면 GitHub Desktop 대신 터미널에서: `git init` → `git add .` → `git commit -m first` → `git branch -M main` → `git remote add origin https://github.com/내아이디/daily-briefing.git` → `git push -u origin main`
 
 ### 2-3. API 키 등록 (Secrets)
 1. 저장소 페이지 → 위쪽 **Settings** 탭.
@@ -154,7 +164,7 @@ python -m http.server 8080 --directory docs
 1. **Settings → Pages** (왼쪽 메뉴).
 2. **Build and deployment → Source**: `Deploy from a branch`.
 3. **Branch**: `main` 선택, 옆 폴더 칸을 `/docs` 로 바꾸고 **Save**.
-4. 1~3분 뒤 같은 페이지 위쪽에 **"Your site is live at https://내아이디.github.io/news-brief/"** 가 뜹니다. 이게 앱 주소입니다. 열어보면 샘플 카드가 보입니다.
+4. 1~3분 뒤 같은 페이지 위쪽에 **"Your site is live at https://내아이디.github.io/daily-briefing/"** 가 뜹니다. 이게 앱 주소입니다. 열어보면 샘플 카드가 보입니다.
 
 ### 2-5. 처음 한 번 수동 실행
 1. 저장소 위쪽 **Actions** 탭.
@@ -176,7 +186,7 @@ Private 저장소에서는 GitHub Pages가 유료(Pro)입니다. 대신 **Cloudf
 
 ## 단계 3. 휴대폰에 앱으로 설치 (2분)
 
-1. 안드로이드 **Chrome**에서 앱 주소(`https://내아이디.github.io/news-brief/`)를 연다.
+1. 안드로이드 **Chrome**에서 앱 주소(`https://내아이디.github.io/daily-briefing/`)를 연다.
 2. 오른쪽 위 **⋮ → 홈 화면에 추가** (또는 "앱 설치").
 3. 홈 화면에 주황 아이콘이 생깁니다. 열면 주소창 없는 전체 화면 앱으로 뜹니다.
 4. 한 번 본 날짜는 지하철 등 오프라인에서도 열립니다. (새 날짜는 인터넷 필요)
