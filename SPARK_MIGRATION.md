@@ -1,18 +1,20 @@
 # Gemini API → Gemini 앱(구독) 전환 검토
 
-작성: 2026-11-01. 근거 수준 표기: **[공식]** Google 문서·블로그 / **[커뮤니티]** 매체·블로그 / **[추정]** Claude 추정.
+작성: 2026-11-01, 갱신: 2026-11-01 (Spark → 작업 모드 명칭 변경 반영).
+
+> **명칭 안내**: 2026-10-12~13 Gemini 4 Argon 출시와 함께 Spark 브랜드가 사라지고 Gemini 앱 프롬프트 창 위 **「채팅 / 작업(Task)」 토글**로 통합됨. 반복 작업은 별도 **「예약됨(Scheduled)」** 페이지에서 관리 [커뮤니티: 9to5Google, Chrome Unboxed]. 아래 본문의 "작업 모드"가 옛 Spark에 해당함. 근거 수준 표기: **[공식]** Google 문서·블로그 / **[커뮤니티]** 매체·블로그 / **[추정]** Claude 추정.
 
 ## 1. 결론
 
-- **가능함.** 단, "예약 작업(Scheduled Actions)"이 아니라 **Gemini Spark(제미나이 스파크)** 를 써야 함.
-  - 예약 작업: 결과가 Gemini 채팅 안에만 남고 파일로 저장 안 됨 → 앱 연동 불가.
-  - Spark: 일정(daily) 실행 + Google Docs 생성/편집 가능 + 한국 정식 출시(AI Pro 이상) → 우리 파이프라인의 "조사 단계"를 대체할 수 있음.
-- **구조**: Spark가 매일 Drive 폴더에 JSON 문서를 저장 → Apps Script가 그 문서를 읽어 돌려줌 → GitHub Actions는 Gemini API 없이 변환만 수행 → 앱 갱신. API 키 호출이 0건이 됨.
+- **가능함.** 단, 채팅 모드의 옛 "예약 작업(Scheduled Actions)"이 아니라 **작업(Task) 모드**(옛 Spark)로 해야 함.
+  - 채팅 모드 예약 작업: 결과가 Gemini 채팅 안에만 남고 파일로 저장 안 됨 → 앱 연동 불가.
+  - 작업 모드: 일정(daily) 실행 + Google Docs 생성/편집 가능 + 한국 정식 출시(AI Pro 이상) → 우리 파이프라인의 "조사 단계"를 대체할 수 있음.
+- **구조**: 작업 모드가 매일 Drive 폴더에 JSON 문서를 저장 → Apps Script가 그 문서를 읽어 돌려줌 → GitHub Actions는 Gemini API 없이 변환만 수행 → 앱 갱신. API 키 호출이 0건이 됨.
 - **대안(더 간단)**: AI Pro 구독에 포함된 **월 $10 Google Cloud 크레딧**을 API 결제에 연결하면 현행 구조를 그대로 두고 비용만 상쇄될 가능성 있음 (실제 월 청구액은 미확인이라 상쇄 여부는 확인 필요).
 
 ## 2. 선택지 비교
 
-| 항목 | A. 현행(API) + AI Pro 크레딧 | B. Gemini Spark → Docs → 앱 | C. 예약 작업(Scheduled Actions) |
+| 항목 | A. 현행(API) + AI Pro 크레딧 | B. 작업 모드(옛 Spark) → Docs → 앱 | C. 채팅 모드 예약 작업 |
 |---|---|---|---|
 | 추가 비용 | 월 $10 크레딧 내면 0 [공식] | 0 (구독에 포함) | 0 |
 | 파일 저장 | 이미 됨 | Google Docs 생성 가능 [공식·커뮤니티] | **불가** (채팅 내 결과만) [공식] |
@@ -30,7 +32,9 @@
 - 실행은 "예약 시각 이후 1시간 이내" [커뮤니티]
 - 출처: [How-To Geek](https://www.howtogeek.com/gemini-scheduled-actions-are-finally-live/), [Android Police](https://www.androidpolice.com/geminis-scheduled-actions/), [Google 도움말](https://support.google.com/gemini/answer/16316416?hl=en-GB), [Datastudios](https://www.datastudios.org/post/google-gemini-s-new-scheduled-actions-what-it-is-how-it-works-and-why-it-matters)
 
-### Gemini Spark
+### 작업(Task) 모드 — 옛 Gemini Spark
+- 2026-10-12~13: Spark가 메인 앱으로 통합. 프롬프트 창 위 「Chat / Task」 버튼, 반복 작업은 「Scheduled」 페이지(Active·Paused·Completed·Suggested) [커뮤니티: [9to5Google](https://9to5google.com/2026/10/12/gemini-spark-task-redesign/), [Chrome Unboxed](https://chromeunboxed.com/google-is-quietly-ditching-the-spark-brand-to-merge-tasks-directly-into-gemini/), [layer3labs](https://www.layer3labs.io/guides/what-happened-to-gemini-spark)]
+- Android 먼저 적용, iOS·웹은 순차 [커뮤니티]. Google AI Pro/Ultra 전용 [공식 요금제 페이지 요약]
 - 개인 계정 + AI Pro/Ultra. 한국 정식 출시(2026-07-30, 영어·한국어) [공식: [Google Korea 블로그](https://blog.google/intl/ko-kr/products/gemini-spark-kr/), [ZDNet Korea](https://zdnet.co.kr/view/?no=20260730095359)]
 - 구성: Task(목표) / Schedule(시간·Gmail 트리거; once·hourly·daily·weekly…) / Skill(재사용 지침) [공식 도움말 요약]
 - Docs 생성·편집, Drive 검색·관리, Gmail 연동 가능 [커뮤니티: [DataCamp](https://www.datacamp.com/blog/gemini-spark), [aiagentslibrary](https://www.aiagentslibrary.com/blog/gemini-spark-tasks-skills-schedules/)]
@@ -44,10 +48,10 @@
 - 현 파이프라인 사용량: 하루 그라운딩 호출 6회(≈ 월 180회). 그라운딩 무료 한도 월 5,000회 주장 [커뮤니티, 유료 티어 기준]. 토큰 비용은 로그에 없어 **미확인** → Google Cloud 콘솔 청구 내역 확인 필요
 - 출처: [eesel 가격 정리](https://www.eesel.ai/blog/gemini-3-8-flash-pricing), [morphllm](https://www.morphllm.com/gemini-api-pricing)
 
-## 4. 플랜 B 설계 (Spark → 앱)
+## 4. 플랜 B 설계 (작업 모드 → 앱)
 
 ```
-[Gemini Spark]  매일 05:30 KST 일정
+[Gemini 작업 모드]  매일 05:30 KST 예약
    └ 조사 → Drive "뉴스브리핑/inbox/YYYY-MM-DD.json" (Google Docs, 본문은 JSON 텍스트만)
 [Apps Script]   doGet?mode=raw&date=YYYY-MM-DD  → 해당 Docs 본문을 그대로 반환 (SECRET 검사)
 [GitHub Actions] 06:30 KST (+07:30 재시도)
@@ -55,7 +59,7 @@
    └ enrich.py → build_doc.py (기존 그대로, Gemini 호출 없음)
 ```
 
-- Spark가 만든 JSON이 깨지면 Actions가 실패 메일을 보내고, 그날은 전날 브리핑이 유지됨.
+- 작업 모드가 만든 JSON이 깨지면 Actions가 실패 메일을 보내고, 그날은 전날 브리핑이 유지됨.
 - JSON 수선용으로만 Gemini API 무료 티어(그라운딩 없음, 하루 1회)를 남겨둘 수 있음. 선택.
 - 코드 작업량: Apps Script `doGet` 확장 + Python 파일 1개 + 워크플로우 2줄. 반나절.
 
@@ -64,11 +68,11 @@
 ### 5-1. 사전 준비 (한 번)
 1. Drive 내 드라이브에 폴더 `뉴스브리핑/inbox` 생성 (Apps Script가 만든 `뉴스브리핑` 폴더 아래).
 2. Gemini 앱 → 설정 → 연결된 앱에서 Google Drive·Docs 켜기.
-3. Gemini 앱 프롬프트 창 옆 **Spark(또는 '작업')** 선택.
+3. Gemini 앱 프롬프트 창 위 토글을 **「작업(Task)」** 으로 전환 (Android에 먼저 적용됨. 웹·iOS에 없으면 Android 앱에서 등록하면 됨. 등록 후에는 기기와 무관하게 Google 클라우드에서 실행).
 
 ### 5-2. Skill 등록 프롬프트 (지침 저장)
 
-아래를 그대로 붙여 넣음. (Skill 기능이 메뉴에 없으면 5-3의 일정 프롬프트 안에 이 본문을 통째로 넣어도 됨.)
+작업 모드에서 아래를 그대로 붙여 넣음. Skill은 작업 설정(옛 Spark 설정)에 저장됨. (Skill 메뉴가 안 보이면 5-3의 일정 프롬프트 안에 이 본문을 통째로 넣어도 됨.)
 
 ```
 "일일뉴스브리핑"이라는 Skill을 만들어 저장해 줘. 지침은 다음과 같아.
@@ -129,10 +133,12 @@
 - 완료되면 "완료: 문서 링크"만 짧게 보고한다.
 ```
 
-### 5-3. 일정 등록 프롬프트
+### 5-3. 예약 등록 프롬프트
+
+작업 모드에서 입력. 등록 후 「예약됨(Scheduled)」 페이지에 Active로 보이면 성공.
 
 ```
-매일 오전 5시 30분(한국 시간)에 "일일뉴스브리핑" Skill을 실행하는 일정을 만들어 줘.
+매일 오전 5시 30분(한국 시간)에 "일일뉴스브리핑" Skill을 실행하는 반복 작업을 예약해 줘.
 내 확인을 기다리지 말고 끝까지 자동으로 진행하고, 실패하면 이유만 알려 줘.
 ```
 
@@ -160,12 +166,12 @@ Skill 기능이 없을 때는 아래 한 문장 뒤에 5-2의 `[목표]`부터 `
 |---|---|---|
 | JSON 형식 깨짐 (코드펜스·설명문 섞임) | 중 | 파서에서 첫 `{`~마지막 `}`만 추출. 그래도 실패하면 API 무료 티어로 수선 1회 |
 | 실행 시각 지연 | 중 | Actions를 06:30·07:30·08:30 3회 시도, 파일 없으면 종료 |
-| Spark가 권한 요청으로 멈춤 | 중 | 첫 1~2회는 직접 지켜보고 승인. 프롬프트에 "확인 없이 진행" 명시 |
+| 작업이 권한 요청으로 멈춤 | 중 | 첫 1~2회는 직접 지켜보고 승인. 프롬프트에 "확인 없이 진행" 명시 |
 | 기사 깊이가 API(그라운딩 46개 출처)보다 얕음 | 미확인 | 첫 주 품질 비교 후 결정. 얕으면 플랜 A로 복귀 |
-| Spark 베타 정책 변경 | 저 | 현행 API 코드는 지우지 않고 환경변수로 전환 가능하게 유지 |
+| 작업 모드 정책·UI 변경 (10월에도 개편됨) | 저 | 현행 API 코드는 지우지 않고 환경변수로 전환 가능하게 유지 |
 
 ## 7. 미확인 항목 (직접 확인 필요)
 - 현재 Gemini API 월 청구액 (Google Cloud 콘솔 → 결제)
-- Spark의 1회 실행당 검색 횟수·시간 상한
-- Spark 일정의 실제 실행 시각 편차
-- Spark 메뉴에서 Skill 기능 노출 여부 (일부 매체는 "Spark→작업(Task)"으로 이름 변경 보도)
+- 작업 모드 1회 실행당 검색 횟수·시간 상한
+- 예약 실행의 실제 시각 편차
+- 웹·iOS에서 작업 토글·Skill 메뉴 노출 여부 (보도 기준 Android 우선)
