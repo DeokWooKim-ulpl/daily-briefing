@@ -2,8 +2,10 @@ name: daily-brief
 
 on:
   schedule:
-    - cron: "0 21 * * *"   # 06:00 KST
-    - cron: "0 22 * * *"   # 07:00 KST 재시도 (당일 파일이 이미 있으면 바로 종료)
+    # 당일 파일이 이미 있으면 바로 종료하므로 여러 번 걸어도 안전
+    - cron: "0 21 * * *"    # 06:00 KST (api 모드 본 실행 / app 모드 1차 확인)
+    - cron: "0 22 * * *"    # 07:00 KST 재시도
+    - cron: "30 23 * * *"   # 08:30 KST 마지막 재시도 (app 모드: 문서 없으면 실패로 알림)
   workflow_dispatch:
     inputs:
       date:
@@ -40,6 +42,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          BRIEF_SOURCE: ${{ vars.BRIEF_SOURCE || 'api' }}   # Settings → Variables 에 BRIEF_SOURCE=app 넣으면 Gemini 앱 모드
+          LAST_SCHEDULE: ${{ github.event.schedule == '30 23 * * *' }}
           APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
           APPS_SCRIPT_SECRET: ${{ secrets.APPS_SCRIPT_SECRET }}
           DATE_ARG: ${{ github.event.inputs.date }}
@@ -48,6 +52,11 @@ jobs:
           ARGS=""
           [ -n "$DATE_ARG" ] && ARGS="$ARGS --date $DATE_ARG"
           [ "$FORCE_ARG" = "true" ] && ARGS="$ARGS --force"
+          # app 모드: 마지막 예약 회차나 수동 실행에서는 문서가 없으면 실패로 알림
+          if [ "$BRIEF_SOURCE" = "app" ] && { [ "$LAST_SCHEDULE" = "true" ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; }; then
+            ARGS="$ARGS --strict"
+          fi
+          echo "source=$BRIEF_SOURCE args=$ARGS"
           python pipeline/run_all.py $ARGS
 
       - name: Upload raw output (debug, 7 days)

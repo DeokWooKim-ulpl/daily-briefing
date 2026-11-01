@@ -11,6 +11,11 @@
  *  5. (테스트) 편집기에서 testBuild 실행 → 권한 승인 → Drive에 샘플 문서 생기는지 확인
  *
  * 코드를 고치면 "배포 관리 → 새 버전"으로 다시 배포해야 반영된다.
+ *
+ * [Gemini 앱 작업 모드 연동]  GET ?mode=inbox&date=YYYY-MM-DD&secret=...
+ *   Gemini 앱이 Drive "뉴스브리핑/inbox" 에 저장한 "YYYY-MM-DD.json" 문서의 본문 텍스트를 돌려준다.
+ *   GitHub Actions 의 pipeline/fetch_inbox.py 가 이 주소를 호출한다.
+ *   (테스트) 편집기에서 testInbox 실행 → 권한 승인 → 로그에 문서 본문이 찍히는지 확인
  */
 
 const ROOT_FOLDER_NAME = '뉴스브리핑';
@@ -29,8 +34,69 @@ function doPost(e) {
   }
 }
 
-function doGet() {
-  return jsonOut({ ok: true, message: 'news-brief doc builder. POST JSON {secret, brief, force}' });
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.mode === 'inbox') {
+    try {
+      const secret = PropertiesService.getScriptProperties().getProperty('SECRET');
+      if (!secret || p.secret !== secret) return jsonOut({ ok: false, error: 'unauthorized' });
+      return jsonOut(readInbox(p.date));
+    } catch (err) {
+      return jsonOut({ ok: false, error: String(err && err.stack || err) });
+    }
+  }
+  return jsonOut({ ok: true, message: 'news-brief doc builder. POST JSON {secret, brief, force} / GET ?mode=inbox&date=YYYY-MM-DD&secret=...' });
+}
+
+/* ---------- Gemini 앱(작업 모드) 결과 읽기 ---------- */
+const INBOX_FOLDER_NAME = 'inbox';
+
+/** 파일 본문을 문자열로. Google Docs 면 본문 텍스트, 그 외(txt/json)는 파일 내용 그대로 */
+function fileText(file) {
+  if (file.getMimeType() === MimeType.GOOGLE_DOCS) {
+    return DocumentApp.openById(file.getId()).getBody().getText();
+  }
+  return file.getBlob().getDataAsString('UTF-8');
+}
+
+/** date(YYYY-MM-DD)로 inbox 문서를 찾는다. 이름이 "YYYY-MM-DD.json" 또는 "YYYY-MM-DD"로 시작하면 인정 */
+function findInboxFile(date) {
+  const inbox = getOrCreateFolder(rootFolder(), INBOX_FOLDER_NAME);
+  let best = null;
+  const consider = f => {
+    if (f.isTrashed()) return;
+    const name = f.getName();
+    if (name.indexOf(date) !== 0) return;  // 날짜로 시작하는 이름만
+    if (!best || f.getLastUpdated() > best.getLastUpdated()) best = f;
+  };
+  // 1) inbox 폴더 안
+  const it = inbox.getFiles();
+  while (it.hasNext()) consider(it.next());
+  if (best) return { file: best, where: 'inbox' };
+  // 2) Gemini가 다른 곳에 저장했을 때 대비: 내 드라이브 전체에서 이름으로 검색 (Docs/텍스트만)
+  const q = "title contains '" + date + "' and trashed = false and (mimeType = 'application/vnd.google-apps.document' or mimeType = 'text/plain' or mimeType = 'application/json')";
+  const it2 = DriveApp.searchFiles(q);
+  while (it2.hasNext()) consider(it2.next());
+  return best ? { file: best, where: 'search' } : null;
+}
+
+function readInbox(date) {
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'bad_date' };
+  const hit = findInboxFile(date);
+  if (!hit) return { ok: false, error: 'not_found', date: date };
+  const f = hit.file;
+  return {
+    ok: true, date: date, name: f.getName(), url: f.getUrl(), where: hit.where,
+    updated: f.getLastUpdated().toISOString(), text: fileText(f),
+  };
+}
+
+/** 편집기에서 직접 실행해 권한 승인 + 동작 확인용. 날짜를 오늘(KST)로 바꿔서 실행 */
+function testInbox() {
+  const today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
+  const r = readInbox(today);
+  Logger.log(JSON.stringify({ ok: r.ok, error: r.error, name: r.name, where: r.where, len: (r.text || '').length }));
+  if (r.text) Logger.log(r.text.slice(0, 500));
 }
 
 function jsonOut(obj) {

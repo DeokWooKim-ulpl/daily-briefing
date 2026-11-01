@@ -5,6 +5,10 @@
   python pipeline/run_all.py --force         # 있어도 다시 생성
   python pipeline/run_all.py --date 2026-11-01
   python pipeline/run_all.py --skip-research # raw가 이미 있을 때 enrich/doc만
+  python pipeline/run_all.py --source app    # 조사 단계를 Gemini 앱(작업 모드) 결과로 대체 (API 호출 없음)
+  python pipeline/run_all.py --source app --strict  # 앱 문서가 없으면 오류 (마지막 재시도용)
+
+--source 를 생략하면 환경변수 BRIEF_SOURCE (api | app, 기본 api) 를 따른다.
 
 pipeline/.env 파일이 있으면 읽는다 (로컬 테스트용, git에 올리지 말 것).
 """
@@ -33,6 +37,8 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--skip-research", action="store_true")
     ap.add_argument("--skip-doc", action="store_true")
+    ap.add_argument("--source", choices=["api", "app"], default=os.environ.get("BRIEF_SOURCE", "api"))
+    ap.add_argument("--strict", action="store_true", help="--source app 에서 문서가 없으면 오류로 종료")
     a = ap.parse_args()
 
     date = a.date or dt.datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
@@ -42,10 +48,18 @@ def main() -> None:
         return
 
     import enrich  # noqa: E402
-    import research  # noqa: E402
 
     if not a.skip_research:
-        research.main(date)
+        if a.source == "app":
+            import fetch_inbox  # noqa: E402
+
+            if fetch_inbox.main(date, strict=a.strict) is None:
+                print(f"[run_all] {date}: Gemini 앱 문서 대기 중 → 종료 (다음 재시도에서 다시 확인)")
+                return
+        else:
+            import research  # noqa: E402
+
+            research.main(date)
     enrich.main(date)
     if not a.skip_doc:
         import build_doc  # noqa: E402

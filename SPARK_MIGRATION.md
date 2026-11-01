@@ -48,7 +48,7 @@
 - 현 파이프라인 사용량: 하루 그라운딩 호출 6회(≈ 월 180회). 그라운딩 무료 한도 월 5,000회 주장 [커뮤니티, 유료 티어 기준]. 토큰 비용은 로그에 없어 **미확인** → Google Cloud 콘솔 청구 내역 확인 필요
 - 출처: [eesel 가격 정리](https://www.eesel.ai/blog/gemini-3-8-flash-pricing), [morphllm](https://www.morphllm.com/gemini-api-pricing)
 
-## 4. 플랜 B 설계 (작업 모드 → 앱)
+## 4. 플랜 B 설계 (작업 모드 → 앱) — **구현 완료** (`pipeline/fetch_inbox.py`, `apps_script/Code.gs` doGet, README 단계 5)
 
 ```
 [Gemini 작업 모드]  매일 05:30 KST 예약
@@ -64,6 +64,8 @@
 - 코드 작업량: Apps Script `doGet` 확장 + Python 파일 1개 + 워크플로우 2줄. 반나절.
 
 ## 5. Gemini 앱에 입력할 프롬프트
+
+> **최신본은 `gemini_app_prompts.md`** (2026-11-01 구현 완료 기준). 아래는 검토 당시 초안.
 
 ### 5-1. 사전 준비 (한 번)
 1. Drive 내 드라이브에 폴더 `뉴스브리핑/inbox` 생성 (Apps Script가 만든 `뉴스브리핑` 폴더 아래).

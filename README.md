@@ -21,6 +21,7 @@
 - **단계 2**: GitHub에 올려서 매일 자동으로 돌게 한다 (30분)
 - **단계 3**: 휴대폰 홈 화면에 앱으로 추가 (2분)
 - **단계 4**: Google Docs 자동 저장 연결 (선택, 15분)
+- **단계 5**: 조사 단계를 Gemini API 대신 **Gemini 앱(작업 모드, AI Pro 구독)** 으로 교체 (선택, 30분). API 비용 0
 
 단계 1만 해도 "내 컴퓨터에서 명령 한 번 치면 오늘 브리핑이 나오는" 상태가 됩니다.
 단계 2까지 해야 손 안 대고 매일 돌아갑니다.
@@ -272,6 +273,81 @@ python pipeline/build_doc.py --date 2026-10-31 --force
 
 ---
 
+## 단계 5. Gemini API 대신 Gemini 앱(작업 모드)으로 조사하기 (선택, 30분)
+
+API 키 대신 **Google AI Pro 구독의 Gemini 앱 「작업(Task)」 모드**(2026-10 전까지 이름 Spark)가 매일 조사를 하고 결과를 Drive에 저장합니다.
+나머지(링크 정리·사진·Docs·앱 배포)는 **그대로**이고, ①단계만 바뀝니다.
+
+### 흐름도
+
+```
+         Gemini 앱 (작업 모드, 내 Google 계정)                   GitHub Actions (서버)
+         ──────────────────────────────                          ─────────────────────────
+ 05:30   ⓐ 예약된 작업 실행: 5개 분야 조사
+ ~06:30  ⓑ Drive 뉴스브리핑/inbox/2026-11-05.json (Docs) 저장
+                                                        06:00   ① fetch_inbox.py ─ Apps Script(GET ?mode=inbox)에 "오늘 문서 줘"
+                                                                   ├ 없음 → 조용히 종료, 07:00에 다시
+                                                                   └ 있음 → JSON 꺼내 검증 → raw/2026-11-05.json
+                                                                ② enrich.py     링크·사진·중복 정리 (기존 그대로)
+                                                                ③ build_doc.py  Apps Script(POST)로 보기 좋은 Docs 생성 (기존 그대로)
+                                                                ④ docs/data/2026-11-05.json 커밋 → Pages 배포 → 앱 갱신
+         07:00 / 08:30  재시도. 08:30에도 문서가 없으면 실패 메일
+```
+
+```mermaid
+flowchart LR
+  A["Gemini 앱 작업 모드<br/>매일 05:30 예약"] -->|조사 결과 JSON| B["Drive<br/>뉴스브리핑/inbox/날짜.json"]
+  B -->|GET ?mode=inbox| C["Apps Script 웹앱"]
+  C --> D["① fetch_inbox.py<br/>JSON 추출·검증"]
+  D --> E["② enrich.py<br/>링크·사진·중복"]
+  E --> F["③ build_doc.py<br/>POST → Docs 생성"]
+  F --> C
+  E --> G["④ docs/data/날짜.json<br/>커밋 → Pages"]
+  G --> H["휴대폰 앱"]
+  style A fill:#fff1d6,stroke:#d97b00
+  style C fill:#e8f0ff,stroke:#3b6fe0
+```
+
+Apps Script 하나가 두 역할을 합니다: **읽기**(Gemini 앱이 남긴 문서를 꺼내 줌)와 **쓰기**(완성본을 보기 좋은 Docs로 만듦).
+
+### 5-1. Apps Script 새 버전 배포 (5분)
+1. script.google.com → 기존 프로젝트 열기 → `Code.gs` 내용을 이 저장소의 `apps_script/Code.gs` 로 **전부 교체** → 저장
+2. 편집기 상단 함수 선택에서 `testInbox` → 실행 → 권한 승인 (Drive 읽기 권한이 추가됨)
+   - 로그에 `"error":"not_found"` 가 나오면 정상 (아직 문서가 없으니까)
+3. **배포 → 배포 관리 → ✎ → 버전: 새 버전 → 배포**. URL은 그대로라 GitHub Secrets는 안 바꿔도 됨
+
+### 5-2. GitHub 변수 (1분) — **Gemini 앱 테스트가 성공한 뒤에**
+GitHub 저장소 → Settings → Secrets and variables → Actions → **Variables** 탭 → New repository variable
+- Name: `BRIEF_SOURCE`, Value: `app`
+- 되돌리려면 값을 `api` 로 바꾸거나 변수를 지우면 됨 (코드 수정 없음)
+
+### 5-3. Gemini 앱 설정 (사용량 초기화 후)
+`gemini_app_prompts.md` 의 프롬프트를 **순서대로** 붙여넣기: Skill 등록 → 즉시 1회 테스트 → 반복 예약.
+사전에 Drive `뉴스브리핑/inbox` 폴더를 만들고 Gemini 앱 설정에서 Drive·Docs 앱 연결을 켜 둘 것.
+
+### 5-4. 확인
+- Gemini 테스트 실행 후 Drive `뉴스브리핑/inbox/오늘날짜.json` 문서가 생기면 → 5-2 변수 등록 → Actions → daily-brief → Run workflow
+- 성공하면 앱에 오늘 날짜가 뜨고 `model` 이 `gemini-app` 으로 기록됨
+- 실패 로그에 `문서가 아직 없음` → Gemini 작업이 안 끝났거나 저장 위치·이름이 다름. 드라이브 전체에서 날짜로 시작하는 이름을 찾으므로 이름만 맞으면 됨
+- `JSON 파싱 실패` → Actions 아티팩트의 `raw/날짜.inbox.txt` 로 원문 확인 후 `gemini_app_prompts.md` 5번 수정 프롬프트 사용
+
+### 내 컴퓨터에서 미리 시험하기
+`.env` 에 `BRIEF_SOURCE=app` 추가 후:
+```bash
+python pipeline/run_all.py --source app --date 2026-11-05 --strict
+```
+
+### 두 방식 비교
+
+| | API (단계 1~2) | Gemini 앱 (단계 5) |
+|---|---|---|
+| 비용 | 토큰 과금 (AI Pro의 월 $10 크레딧으로 일부·전부 상쇄 가능) | 구독에 포함, 추가 0 |
+| 실행 시각 | 정확 | 예약 시각 ±1시간 (3회 재시도로 흡수) |
+| JSON 형식 | 강제됨 | 프롬프트 의존. 파이프라인이 코드펜스·따옴표 오류를 자동 보정 |
+| 조사 깊이 | 분야당 출처 20~46개 (실측) | 미확인. 첫 주 비교 필요 |
+
+---
+
 ## 바꾸고 싶을 때 (튜닝)
 
 | 바꾸고 싶은 것 | 어디를 고치나 |
@@ -305,14 +381,17 @@ python pipeline/build_doc.py --date 2026-10-31 --force
 | 경로 | 역할 |
 |---|---|
 | `pipeline/run_all.py` | 전체 실행 (research → enrich → build_doc) |
-| `pipeline/research.py` | Gemini 호출 (하루 6회) |
+| `pipeline/research.py` | Gemini API 호출 (하루 6회). `BRIEF_SOURCE=api` 일 때 |
+| `pipeline/fetch_inbox.py` | Gemini 앱이 Drive에 남긴 문서를 가져와 검증. `BRIEF_SOURCE=app` 일 때 (단계 5) |
 | `pipeline/enrich.py` | 링크·사진·중복 정리 (AI 안 씀) |
 | `pipeline/build_doc.py` | Apps Script에 보내 Google Docs 생성 |
 | `pipeline/schema.py` | 데이터 구조 + 분야 목록 |
 | `pipeline/prompts/` | Gemini 프롬프트 3개 |
 | `pipeline/.env` | 내 컴퓨터용 설정 (API 키). GitHub에 안 올라감 |
 | `pipeline/raw/` | Gemini 원본 응답 (디버그용, 자동 생성, GitHub에 안 올라감) |
-| `apps_script/Code.gs` | Apps Script에 붙여넣을 코드 |
+| `apps_script/Code.gs` | Apps Script에 붙여넣을 코드 (Docs 생성 + inbox 문서 읽기) |
+| `gemini_app_prompts.md` | Gemini 앱 작업 모드에 넣을 프롬프트 (단계 5) |
+| `SPARK_MIGRATION.md` | 단계 5 도입 검토 기록 (근거·출처) |
 | `docs/` | 앱 (GitHub Pages가 이 폴더를 공개) |
 | `docs/data/` | 날짜별 브리핑 JSON. 하루 1개씩 쌓임 (약 50~150KB) |
 | `.github/workflows/daily.yml` | 매일 자동 실행 설정 |
