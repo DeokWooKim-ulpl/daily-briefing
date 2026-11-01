@@ -31,7 +31,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 PROMPTS = ROOT / "prompts"
 RAW_DIR = ROOT / "raw"
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 SYNTH_MODEL = os.environ.get("GEMINI_SYNTH_MODEL", MODEL)
 MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "24000"))
 RETRIES = 2
