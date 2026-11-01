@@ -1,0 +1,136 @@
+{
+ "date": "2026-10-31",
+ "generated_at": "2026-10-31T06:03:00+09:00",
+ "model": "sample",
+ "window": ["2026-10-30 06:00", "2026-10-31 06:00"],
+ "categories": [
+  {
+   "name": "경제",
+   "code": "eco",
+   "items": [
+    {
+     "id": "eco-01",
+     "headline": "(샘플) 중앙은행, 기준금리 동결",
+     "importance": 5,
+     "summary": "이 카드는 앱 화면 확인용 샘플입니다. 실제 뉴스가 아니며, 첫 자동 실행 후 실제 브리핑이 새 날짜로 추가됩니다. 요약은 3문장 이내로 들어옵니다.",
+     "impact": [
+      "대출자: 이자 부담이 당분간 유지되어 가계 소비 여력에 변화 없음",
+      "채권시장: 다음 회의까지 금리 인하 기대가 선반영될 수 있음",
+      "환율: 미국과의 금리 차 유지로 원화 약세 압력 지속"
+     ],
+     "detail": "배경: 샘플 상세 문단입니다. 실제 실행에서는 Gemini가 500~1200자 분량으로 배경, 경과, 현재 상태, 쟁점을 순서대로 정리합니다.\n\n경과: 두 번째 문단입니다. 줄바꿈으로 구분된 문단은 앱에서 각각 따로 표시됩니다.\n\n쟁점: 세 번째 문단입니다. 상반된 입장이 있으면 양쪽을 함께 적습니다.",
+     "watch_next": "다음 달 금융통화위원회 회의 결과",
+     "keywords": ["기준금리", "통화정책", "환율"],
+     "entities": ["한국은행"],
+     "sources": [
+      {"title": "샘플 기사 1 — 실제 실행 시 실제 기사 링크가 들어옵니다", "publisher": "샘플통신", "url": "https://example.com/sample-1"},
+      {"title": "샘플 기사 2", "publisher": "샘플일보", "url": "https://example.com/sample-2"}
+     ]
+    },
+    {
+     "id": "eco-02",
+     "headline": "(샘플) 수출 지표 발표",
+     "importance": 3,
+     "summary": "두 번째 샘플 카드입니다. 중요도는 점 다섯 개 중 채워진 개수로 표시됩니다.",
+     "impact": ["관련 업종 주가 변동 가능", "다음 분기 전망치 조정 가능성"],
+     "detail": "샘플 상세입니다.",
+     "watch_next": "다음 달 1일 월간 수출입 동향 발표",
+     "keywords": ["수출", "무역"],
+     "entities": ["산업통상자원부"],
+     "sources": [{"title": "샘플 기사", "publisher": "샘플경제", "url": "https://example.com/sample-3"}]
+    }
+   ],
+   "grounding": []
+  },
+  {
+   "name": "정치",
+   "code": "pol",
+   "items": [
+    {
+     "id": "pol-01",
+     "headline": "(샘플) 예산안 심사 시작",
+     "importance": 4,
+     "summary": "정치 분야 샘플 카드입니다. 분야마다 색이 다릅니다.",
+     "impact": ["연말까지 여야 협상 일정이 다른 법안 처리에 영향"],
+     "detail": "샘플 상세입니다.",
+     "watch_next": "예산결산특별위원회 일정",
+     "keywords": ["예산", "국회"],
+     "entities": ["국회"],
+     "sources": [{"title": "샘플 기사", "publisher": "샘플뉴스", "url": "https://example.com/sample-4"}]
+    }
+   ],
+   "grounding": []
+  },
+  {
+   "name": "사회·사건사고",
+   "code": "soc",
+   "items": [
+    {
+     "id": "soc-01",
+     "headline": "(샘플) 대형 교통사고 조사",
+     "importance": 3,
+     "summary": "사회·사건사고 분야 샘플 카드입니다.",
+     "impact": ["관련 안전 규정 재검토 논의"],
+     "detail": "",
+     "watch_next": "",
+     "keywords": [],
+     "entities": [],
+     "sources": []
+    }
+   ],
+   "grounding": []
+  },
+  {
+   "name": "국제",
+   "code": "intl",
+   "items": [
+    {
+     "id": "intl-01",
+     "headline": "(샘플) 정상회담 개최",
+     "importance": 4,
+     "summary": "국제 분야 샘플 카드입니다. 한국에 미치는 영향을 파급 항목에 적습니다.",
+     "impact": ["한국 수출 기업의 관세 환경 변화 가능", "환율·원자재 가격 변동"],
+     "detail": "샘플 상세입니다.",
+     "watch_next": "공동 성명 발표 여부",
+     "keywords": ["정상회담", "관세"],
+     "entities": [],
+     "sources": [{"title": "샘플 기사", "publisher": "Sample Times", "url": "https://example.com/sample-5"}]
+    }
+   ],
+   "grounding": []
+  },
+  {
+   "name": "산업·기술",
+   "code": "tech",
+   "items": [
+    {
+     "id": "tech-01",
+     "headline": "(샘플) 반도체 투자 발표",
+     "importance": 4,
+     "summary": "산업·기술 분야 샘플 카드입니다.",
+     "impact": ["장비·소재 협력사 수주 기대", "지역 고용 효과"],
+     "detail": "샘플 상세입니다.",
+     "watch_next": "착공 일정 공시",
+     "keywords": ["반도체", "투자"],
+     "entities": [],
+     "sources": [{"title": "샘플 기사", "publisher": "샘플테크", "url": "https://example.com/sample-6"}]
+    }
+   ],
+   "grounding": []
+  }
+ ],
+ "synthesis": {
+  "top5": [
+   {"ref": "eco-01", "why": "금리 결정은 대출·환율·증시에 동시에 영향"},
+   {"ref": "intl-01", "why": "관세 환경 변화가 수출 기업에 직결"},
+   {"ref": "pol-01", "why": "예산 일정이 연말 정국을 좌우"},
+   {"ref": "tech-01", "why": "대규모 투자로 협력사·지역 경제 파급"},
+   {"ref": "soc-01", "why": "안전 규정 논의로 이어질 가능성"}
+  ],
+  "connections": [
+   {"from": "eco-01", "to": "pol-01", "how": "금리 동결로 재정 부담 논쟁이 예산 심사에서 커질 수 있음"},
+   {"from": "intl-01", "to": "tech-01", "how": "관세 환경 변화가 반도체 투자 입지 결정에 반영"}
+  ],
+  "one_liner": "(샘플) 첫 자동 실행 후 실제 브리핑이 표시됩니다"
+ }
+}

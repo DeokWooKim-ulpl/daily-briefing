@@ -1,0 +1,27 @@
+오늘 날짜: {today} (KST)
+카테고리: {category}
+카테고리 설명: {category_desc}
+
+이 카테고리에서 지난 24시간의 가장 중요한 사건 {n_min}~{n_max}개를 Google 검색으로 조사하라.
+사건을 고르기 전에 먼저 넓게 검색(한국 뉴스 + 해외 주요 매체)하고, 중요도 순으로 정렬해 선택하라.
+각 사건마다 최소 2개의 서로 다른 매체 기사를 확인한 뒤 작성하라.
+
+아래 JSON 구조로만 답하라. id는 "{category_code}-01", "{category_code}-02" 순서로 붙인다.
+{
+  "date": "{today}",
+  "category": "{category}",
+  "items": [
+    {
+      "id": "{category_code}-01",
+      "headline": "20자 이내",
+      "importance": 1,
+      "summary": "3문장 이내",
+      "impact": ["구체적 영향 경로 1", "구체적 영향 경로 2"],
+      "detail": "500~1200자. 배경 → 경과 → 현재 상태 → 쟁점",
+      "watch_next": "다음에 지켜볼 일정·지표·결정 1문장",
+      "keywords": ["키워드"],
+      "entities": ["기관·인물·기업명"],
+      "sources": [{"title": "기사 제목", "publisher": "매체명", "url": "https://..."}]
+    }
+  ]
+}

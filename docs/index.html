@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>뉴스브리핑</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo"></span>
+      <span class="title">뉴스브리핑</span>
+      <span id="badge" class="badge" hidden>샘플</span>
+      <a id="docLink" class="doclink" href="#" target="_blank" rel="noopener" hidden title="Google Docs 열기">문서</a>
+    </div>
+    <nav id="dates" class="dates" aria-label="날짜"></nav>
+    <nav id="tabs" class="tabs" aria-label="분야"></nav>
+  </header>
+
+  <main id="main" class="main">
+    <p class="status" id="status">불러오는 중…</p>
+  </main>
+
+  <footer class="foot">
+    <span id="meta"></span>
+  </footer>
+
+  <template id="tpl-card">
+    <article class="card">
+      <div class="thumb"><img alt="" loading="lazy" decoding="async"><span class="ph"></span></div>
+      <div class="body">
+        <div class="meta"><span class="chip"></span><span class="imp" title="중요도"></span></div>
+        <h3 class="hl"></h3>
+        <p class="sum"></p>
+        <div class="more" hidden>
+          <h4>파급</h4>
+          <ul class="impact"></ul>
+          <p class="watch"></p>
+          <h4>상세</h4>
+          <div class="detail"></div>
+          <h4>원문</h4>
+          <ul class="src"></ul>
+          <p class="kw"></p>
+        </div>
+        <button class="toggle" type="button">더 보기</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
