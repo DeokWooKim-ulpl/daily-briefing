@@ -1,4 +1,27 @@
+/* ---------- 테마: 기본은 밝은 모드, <html data-theme="dark">면 어두운 모드 ---------- */
 :root {
+  color-scheme: light;
+  --bg: #f4f5f8;
+  --bg2: #ffffff;
+  --card: #ffffff;
+  --line: #d9dde6;
+  --fg: #1a1d24;
+  --fg2: #4b5262;
+  --fg3: #7a8190;
+  --ink: #1a1d24;          /* 칩·플레이스홀더 글자를 섞을 기준색 */
+  --badge-bg: #fff1d6;
+  --accent: #d97b00;
+  --eco: #1f9a66;
+  --pol: #d14b4b;
+  --soc: #b98400;
+  --intl: #3b6fe0;
+  --tech: #8a4fe8;
+  --top: #d97b00;
+  --radius: 14px;
+  --pad: 16px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f1115;
   --bg2: #171a21;
   --card: #1c2029;
@@ -6,6 +29,8 @@
   --fg: #e8eaf0;
   --fg2: #a7adbb;
   --fg3: #6c7383;
+  --ink: #ffffff;
+  --badge-bg: #3a2d12;
   --accent: #ffb547;
   --eco: #3fb27f;
   --pol: #e36b6b;
@@ -13,8 +38,6 @@
   --intl: #5b8def;
   --tech: #a56cf5;
   --top: #ffb547;
-  --radius: 14px;
-  --pad: 16px;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -33,7 +56,7 @@ button { font: inherit; }
 /* ---------- header ---------- */
 .top {
   position: sticky; top: 0; z-index: 10;
-  background: linear-gradient(var(--bg) 85%, rgba(15,17,21,0));
+  background: linear-gradient(var(--bg) 85%, transparent);
   padding-top: env(safe-area-inset-top);
 }
 .brand {
@@ -43,17 +66,34 @@ button { font: inherit; }
 .logo {
   width: 22px; height: 22px; border-radius: 6px;
   background: linear-gradient(135deg, var(--accent), #ff7a45);
-  box-shadow: inset 0 0 0 5px var(--bg);
+  box-shadow: inset 0 0 0 5px var(--bg2);
 }
 .title { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; }
 .badge {
   font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
-  background: #3a2d12; color: var(--accent);
+  background: var(--badge-bg); color: var(--accent);
 }
 .doclink {
   margin-left: auto; font-size: 13px; color: var(--fg2); text-decoration: none;
   padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px;
 }
+.themeSwitch {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;
+  background: none; border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 6px 3px 8px; color: var(--fg2); font-size: 12px; cursor: pointer;
+}
+.themeSwitch .track {
+  position: relative; width: 30px; height: 16px; border-radius: 999px;
+  background: var(--line); transition: background .2s;
+}
+.themeSwitch .knob {
+  position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--bg2); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .2s;
+}
+.themeSwitch[aria-checked="true"] .track { background: var(--accent); }
+.themeSwitch[aria-checked="true"] .knob { left: 16px; }
+.doclink[hidden] + .themeSwitch { margin-left: auto; }
+
 .dates, .tabs {
   display: flex; gap: 6px; overflow-x: auto; padding: 4px var(--pad) 8px;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
@@ -106,12 +146,13 @@ button { font: inherit; }
 }
 .card.cat-eco { --c: var(--eco); } .card.cat-pol { --c: var(--pol); } .card.cat-soc { --c: var(--soc); }
 .card.cat-intl { --c: var(--intl); } .card.cat-tech { --c: var(--tech); }
+.card { box-shadow: 0 1px 2px rgba(0,0,0,.06); }
 .card.hi { box-shadow: 0 0 0 2px var(--c); }
 .thumb { position: relative; aspect-ratio: 16/8; background: color-mix(in srgb, var(--c) 25%, var(--bg2)); overflow: hidden; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb .ph {
   position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-  font-size: 44px; font-weight: 800; color: color-mix(in srgb, var(--c) 70%, #fff); opacity: .6;
+  font-size: 44px; font-weight: 800; color: color-mix(in srgb, var(--c) 70%, var(--ink)); opacity: .6;
 }
 .thumb.noimg { aspect-ratio: 16/4; }
 .thumb.noimg img { display: none; }
@@ -120,7 +161,7 @@ button { font: inherit; }
 .meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .chip {
   font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-  background: color-mix(in srgb, var(--c) 22%, var(--bg2)); color: color-mix(in srgb, var(--c) 80%, #fff);
+  background: color-mix(in srgb, var(--c) 22%, var(--bg2)); color: color-mix(in srgb, var(--c) 75%, var(--ink));
 }
 .imp { font-size: 11px; letter-spacing: 1px; color: var(--c); }
 .imp .off { color: var(--line); }

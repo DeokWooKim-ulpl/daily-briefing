@@ -10,6 +10,7 @@
   const el = {
     dates: $("#dates"), tabs: $("#tabs"), main: $("#main"), status: $("#status"),
     badge: $("#badge"), docLink: $("#docLink"), meta: $("#meta"), tpl: $("#tpl-card"),
+    themeSwitch: $("#themeSwitch"),
   };
 
   const state = { dates: [], date: null, brief: null, tab: "top", open: new Set() };
@@ -318,7 +319,29 @@
     }
   }
 
+  // ---------- 테마 (밝게/어둡게) ----------
+  const THEME_COLOR = { light: "#f4f5f8", dark: "#0f1115" };
+  function applyTheme(theme) {
+    const dark = theme === "dark";
+    if (dark) document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    el.themeSwitch.setAttribute("aria-checked", String(dark));
+    const m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute("content", THEME_COLOR[dark ? "dark" : "light"]);
+    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (_) {}
+  }
+  function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem("theme"); } catch (_) {}
+    applyTheme(saved === "dark" ? "dark" : "light");
+    el.themeSwitch.addEventListener("click", () => {
+      const nowDark = document.documentElement.getAttribute("data-theme") === "dark";
+      applyTheme(nowDark ? "light" : "dark");
+    });
+  }
+
   async function init() {
+    initTheme();
     try {
       await loadIndex();
       if (!state.dates.length) {

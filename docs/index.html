@@ -4,14 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#0f1115">
+  <meta name="theme-color" content="#f4f5f8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>뉴스브리핑</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <script>
+    /* 저장된 테마를 CSS 로드 전에 적용 (화면 깜빡임 방지). 저장값 없으면 밝은 모드 */
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    } catch (e) {}
+  </script>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -21,6 +28,9 @@
       <span class="title">뉴스브리핑</span>
       <span id="badge" class="badge" hidden>샘플</span>
       <a id="docLink" class="doclink" href="#" target="_blank" rel="noopener" hidden title="Google Docs 열기">문서</a>
+      <button id="themeSwitch" class="themeSwitch" type="button" role="switch" aria-checked="false" title="어두운 모드 켬/끔">
+        <span class="lbl">어둡게</span><span class="track"><span class="knob"></span></span>
+      </button>
     </div>
     <nav id="dates" class="dates" aria-label="날짜"></nav>
     <nav id="tabs" class="tabs" aria-label="분야"></nav>
