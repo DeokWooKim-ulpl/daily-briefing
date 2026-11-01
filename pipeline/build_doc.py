@@ -15,6 +15,8 @@ import sys
 
 import requests
 
+import envload  # noqa: F401  (.env 자동 로드)
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # Windows 콘솔 한글 깨짐 방지
 

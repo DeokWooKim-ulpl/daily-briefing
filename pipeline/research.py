@@ -23,6 +23,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from google.genai import types
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import envload  # noqa: E402,F401  (.env 자동 로드)
 from schema import CATEGORIES, CategoryResult, Synthesis  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")

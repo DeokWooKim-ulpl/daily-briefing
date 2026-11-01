@@ -45,6 +45,11 @@
 1. 탐색기에서 이 폴더(`뉴스브리핑 앱`)를 연다.
 2. 빈 곳에서 **마우스 오른쪽 클릭 → "터미널에서 열기"** (없으면 주소창에 `powershell` 입력 후 Enter).
 3. 검은(또는 파란) 창이 뜨고, 경로 끝이 `뉴스브리핑 앱>` 으로 끝나면 된 것.
+4. 경로가 다른 곳(예: `C:\Users\ys898>`)이면 아래를 붙여넣고 Enter 해서 이동한다. (폴더 이름에 `[6]`이 있어서 `-LiteralPath`가 꼭 필요함)
+   ```powershell
+   Set-Location -LiteralPath "G:\다른 컴퓨터\내 컴퓨터 (1)\내 PC\Desktop\Main\Main\[6] 김덕우 개인 폴더\09 개발·프로젝트\뉴스브리핑 앱"
+   ```
+   `can't open file '...build_doc.py'` 같은 오류는 거의 항상 이 위치 문제다.
 4. 만약 `PS C:\WINDOWS\System32\WindowsPowerShell\v1.0>` 처럼 다른 위치로 열렸으면, 아래를 붙여넣고 Enter 해서 폴더로 이동한다:
    ```
    cd -LiteralPath "G:\다른 컴퓨터\내 컴퓨터 (1)\내 PC\Desktop\Main\Main\[6] 김덕우 개인 폴더\09 개발·프로젝트\뉴스브리핑 앱"
@@ -152,22 +157,25 @@ python -m http.server 8080 --directory docs
 
 > 명령어가 편하면 GitHub Desktop 대신 터미널에서: `git init` → `git add .` → `git commit -m first` → `git branch -M main` → `git remote add origin https://github.com/내아이디/daily-briefing.git` → `git push -u origin main`
 
-### 2-3. API 키 등록 (Secrets)
-1. 저장소 페이지 → 위쪽 **Settings** 탭.
+### 2-3. API 키 등록 (Secrets) — GitHub **웹사이트**에서
+> 2-3부터 2-5까지는 GitHub Desktop이 아니라 **브라우저로 github.com에 접속해서** 합니다. GitHub Desktop에는 Settings 탭이 없습니다.
+
+1. 브라우저에서 `https://github.com/내아이디/daily-briefing` 접속 (GitHub Desktop의 **View on GitHub** 버튼으로 열어도 됨).
+   저장소 이름 아래 가로로 **Code · Issues · Pull requests · Actions · ... · Settings** 탭이 있습니다. 맨 오른쪽 **Settings** 클릭.
 2. 왼쪽 메뉴 **Secrets and variables → Actions**.
 3. 초록 버튼 **New repository secret**.
 4. Name: `GEMINI_API_KEY` (대소문자·밑줄 정확히), Secret: 키 붙여넣기 → **Add secret**.
 
 (Docs 연동을 할 때 같은 방법으로 `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` 두 개를 더 추가합니다. 단계 4 참고.)
 
-### 2-4. 앱 주소 만들기 (Pages)
-1. **Settings → Pages** (왼쪽 메뉴).
+### 2-4. 앱 주소 만들기 (Pages) — GitHub 웹사이트에서
+1. 같은 저장소 페이지의 **Settings → 왼쪽 메뉴 Pages**.
 2. **Build and deployment → Source**: `Deploy from a branch`.
 3. **Branch**: `main` 선택, 옆 폴더 칸을 `/docs` 로 바꾸고 **Save**.
 4. 1~3분 뒤 같은 페이지 위쪽에 **"Your site is live at https://내아이디.github.io/daily-briefing/"** 가 뜹니다. 이게 앱 주소입니다. 열어보면 샘플 카드가 보입니다.
 
-### 2-5. 처음 한 번 수동 실행
-1. 저장소 위쪽 **Actions** 탭.
+### 2-5. 처음 한 번 수동 실행 — GitHub 웹사이트에서
+1. 저장소 페이지 위쪽 **Actions** 탭 (Settings 왼쪽에 있음).
 2. "Workflows aren't being run on this repository" 같은 안내가 보이면 초록 버튼 **I understand my workflows, go ahead and enable them** 클릭.
 3. 왼쪽 목록에서 **daily-brief** 클릭 → 오른쪽 **Run workflow ▾ → Run workflow** (입력칸은 비워둠).
 4. 10초쯤 뒤 새로고침하면 노란 점(실행 중)이 생깁니다. 5~10분 뒤 **초록 체크**가 되면 성공.
@@ -227,11 +235,38 @@ PC에서는 Chrome 주소창 오른쪽의 **설치** 아이콘을 누르면 창 
 4. **배포** → 또 권한 승인이 뜨면 4-3과 같이 허용.
 5. **웹 앱 URL**(`https://script.google.com/macros/s/.../exec`)을 **복사**.
 
-### 4-5. 연결
-- **GitHub**: 2-3과 같은 방법으로 Secrets 두 개 추가: `APPS_SCRIPT_URL` = 복사한 URL, `APPS_SCRIPT_SECRET` = 4-2의 SECRET 값.
-- **내 컴퓨터**: `pipeline/.env`의 `APPS_SCRIPT_URL=`, `APPS_SCRIPT_SECRET=` 뒤에 같은 값 입력.
+### 4-5. 연결 (값 두 개를 GitHub와 내 컴퓨터에 각각 넣기)
 
-다음 실행부터 문서가 생기고, 앱 오른쪽 위에 **문서** 버튼이 나타납니다.
+지금 손에 있어야 하는 값은 두 개입니다.
+- **값 A: 웹 앱 URL** — 4-4에서 복사한 `https://script.google.com/macros/s/AKfy.../exec` (끝이 `/exec`)
+- **값 B: SECRET** — 4-2에서 스크립트 속성에 넣은 문자열. `pipeline/.env`의 `APPS_SCRIPT_SECRET=` 뒤에 있는 것과 같은 값
+
+이 두 값을 **GitHub(자동 실행용)** 와 **내 컴퓨터(수동 테스트용)** 두 곳에 넣습니다. 둘 다 해야 양쪽에서 Docs가 만들어집니다.
+
+#### (1) GitHub Secrets에 넣기 — 브라우저
+1. `https://github.com/내아이디/daily-briefing/settings/secrets/actions` 접속 (2-3에서 `GEMINI_API_KEY`를 넣었던 그 페이지).
+2. **New repository secret** 클릭 → Name: `APPS_SCRIPT_URL` / Secret: 값 A 붙여넣기 → **Add secret**.
+3. 다시 **New repository secret** 클릭 → Name: `APPS_SCRIPT_SECRET` / Secret: 값 B 붙여넣기 → **Add secret**.
+4. 목록에 `GEMINI_API_KEY`, `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` 세 개가 보이면 완료.
+
+#### (2) 내 컴퓨터 `.env`에 넣기 — 메모장
+1. `pipeline/.env` 파일을 메모장으로 연다.
+2. `APPS_SCRIPT_URL=` 뒤에 값 A를 붙여넣는다. (한 줄에, 따옴표·공백 없이)
+3. `APPS_SCRIPT_SECRET=` 뒤에는 값 B가 이미 들어 있으면 그대로 둔다. 비어 있으면 붙여넣는다.
+4. 저장. 결과는 이런 모양:
+   ```
+   APPS_SCRIPT_URL=https://script.google.com/macros/s/AKfycb.../exec
+   APPS_SCRIPT_SECRET=aB3dE...(32자)
+   ```
+
+#### (3) 확인
+터미널(1-2 참고)에서:
+```bash
+python pipeline/build_doc.py --date 2026-10-31 --force
+```
+- `[build_doc] 문서 생성: https://docs.google.com/document/d/...` 가 나오고 Drive 폴더에 `2026-10-31 뉴스브리핑` 문서가 생기면 성공. (10/31은 샘플 데이터라 내용은 샘플)
+- `unauthorized` 가 나오면 값 B가 Apps Script 스크립트 속성의 `SECRET`과 다른 것. 양쪽을 다시 비교.
+- 응답이 JSON이 아니라는 오류면 값 A가 `/exec`로 끝나지 않거나, 4-4에서 액세스 권한을 "모든 사용자"로 안 한 것.
 
 > `Code.gs`를 나중에 수정하면 **배포 → 배포 관리 → ✎ → 버전: 새 버전 → 배포** 를 해야 반영됩니다. 그냥 저장만 하면 옛날 버전이 계속 돕니다.
 

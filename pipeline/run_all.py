@@ -24,19 +24,10 @@ ROOT = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 
-def load_dotenv(path: pathlib.Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+import envload  # noqa: E402,F401  (.env 자동 로드)
 
 
 def main() -> None:
-    load_dotenv(ROOT / ".env")
     ap = argparse.ArgumentParser()
     ap.add_argument("--date")
     ap.add_argument("--force", action="store_true")
