@@ -275,7 +275,7 @@ python pipeline/build_doc.py --date 2026-10-31 --force
 
 ## 단계 5. Gemini API 대신 Gemini 앱(작업 모드)으로 조사하기 (선택, 30분)
 
-API 키 대신 **Google AI Pro 구독의 Gemini 앱 「작업(Task)」 모드**(2026-10 전까지 이름 Spark)가 매일 조사를 하고 결과를 Drive에 저장합니다.
+API 키 대신 **Google AI Pro 구독의 Gemini 앱 「작업」 모드**가 매일 조사를 하고 결과를 Drive에 저장합니다.
 나머지(링크 정리·사진·Docs·앱 배포)는 **그대로**이고, ①단계만 바뀝니다.
 
 ### 흐름도
@@ -322,14 +322,14 @@ GitHub 저장소 → Settings → Secrets and variables → Actions → **Variab
 - 되돌리려면 값을 `api` 로 바꾸거나 변수를 지우면 됨 (코드 수정 없음)
 
 ### 5-3. Gemini 앱 설정 (사용량 초기화 후)
-`gemini_app_prompts.md` 의 프롬프트를 **순서대로** 붙여넣기: Skill 등록 → 즉시 1회 테스트 → 반복 예약.
+`GEMINI_APP_GUIDE.md` 3절의 프롬프트를 **순서대로** 붙여넣기: 즉시 1회 테스트(3-A) → 반복 예약(3-B).
 사전에 Drive `뉴스브리핑/inbox` 폴더를 만들고 Gemini 앱 설정에서 Drive·Docs 앱 연결을 켜 둘 것.
 
 ### 5-4. 확인
 - Gemini 테스트 실행 후 Drive `뉴스브리핑/inbox/오늘날짜.json` 문서가 생기면 → 5-2 변수 등록 → Actions → daily-brief → Run workflow
 - 성공하면 앱에 오늘 날짜가 뜨고 `model` 이 `gemini-app` 으로 기록됨
 - 실패 로그에 `문서가 아직 없음` → Gemini 작업이 안 끝났거나 저장 위치·이름이 다름. 드라이브 전체에서 날짜로 시작하는 이름을 찾으므로 이름만 맞으면 됨
-- `JSON 파싱 실패` → Actions 아티팩트의 `raw/날짜.inbox.txt` 로 원문 확인 후 `gemini_app_prompts.md` 5번 수정 프롬프트 사용
+- `JSON 파싱 실패` → Actions 아티팩트의 `raw/날짜.inbox.txt` 로 원문 확인 후 `GEMINI_APP_GUIDE.md` 3-D 수정 프롬프트 사용
 
 ### 내 컴퓨터에서 미리 시험하기
 `.env` 에 `BRIEF_SOURCE=app` 추가 후:
@@ -390,8 +390,7 @@ python pipeline/run_all.py --source app --date 2026-11-05 --strict
 | `pipeline/.env` | 내 컴퓨터용 설정 (API 키). GitHub에 안 올라감 |
 | `pipeline/raw/` | Gemini 원본 응답 (디버그용, 자동 생성, GitHub에 안 올라감) |
 | `apps_script/Code.gs` | Apps Script에 붙여넣을 코드 (Docs 생성 + inbox 문서 읽기) |
-| `gemini_app_prompts.md` | Gemini 앱 작업 모드에 넣을 프롬프트 (단계 5) |
-| `SPARK_MIGRATION.md` | 단계 5 도입 검토 기록 (근거·출처) |
+| `GEMINI_APP_GUIDE.md` | 단계 5 통합 가이드: 검토 결론·흐름도·Gemini 앱 프롬프트·근거 |
 | `docs/` | 앱 (GitHub Pages가 이 폴더를 공개) |
 | `docs/data/` | 날짜별 브리핑 JSON. 하루 1개씩 쌓임 (약 50~150KB) |
 | `.github/workflows/daily.yml` | 매일 자동 실행 설정 |
