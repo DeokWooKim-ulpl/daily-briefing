@@ -151,23 +151,123 @@ Android 앱에 먼저 적용된 기능이라 웹·iOS에 토글이 없으면 And
 
 ---
 
-## 4. Gemini 앱 밖에서 미리 할 일 (사용량 초기화와 무관, 지금 가능)
+## 4. 내가 할 일 — 단계별 체크리스트
 
-| 순서 | 할 일 | 비고 |
-|---|---|---|
-| 1 | Drive → 내 드라이브 → `뉴스브리핑` 폴더 안에 `inbox` 폴더 생성 | Apps Script가 만든 `뉴스브리핑` 폴더 |
-| 2 | Gemini 앱 → 설정 → 연결된 앱 → **Google Drive**, **Google Docs** 켜기 | |
-| 3 | script.google.com → 기존 프로젝트 → `Code.gs` 를 저장소의 `apps_script/Code.gs` 로 전부 교체 → 저장 | 읽기 기능이 추가된 버전 |
-| 4 | 편집기에서 함수 `testInbox` 선택 → 실행 → 권한 승인 | 로그에 `"error":"not_found"` 면 정상 (아직 문서 없음) |
-| 5 | 배포 → 배포 관리 → ✎ → 버전: **새 버전** → 배포 | URL 동일, GitHub Secrets 변경 불필요 |
-| 6 | **3-A 테스트 성공 후** GitHub → Settings → Secrets and variables → Actions → **Variables** → `BRIEF_SOURCE` = `app` | 되돌리려면 `api` 로 변경 |
+전부 브라우저·휴대폰 클릭 작업. 터미널은 선택 단계에서만 씀. 각 단계 끝의 **확인** 이 맞으면 다음으로.
 
-내 컴퓨터에서 미리 시험: `.env` 에 `BRIEF_SOURCE=app` 추가 후
-```bash
-python pipeline/run_all.py --source app --date 2026-11-05 --strict
-```
+### D-2 (11/3~11/4) — Gemini 사용량과 무관하게 지금 할 수 있는 것
+
+**① Drive 폴더 만들기 (1분)**
+1. drive.google.com → 왼쪽 "내 드라이브" → `뉴스브리핑` 폴더 더블클릭 (Apps Script가 만들어 둔 폴더. 안에 `2026` 폴더가 있음)
+2. 빈 곳에서 오른쪽 클릭 → 새 폴더 → 이름 `inbox` → 만들기
+- **확인**: 경로가 `내 드라이브 > 뉴스브리핑 > inbox`. 이름은 소문자 영문 그대로.
+
+**② Gemini 앱에 Drive·Docs 연결 (2분)**
+1. gemini.google.com (또는 휴대폰 Gemini 앱) → 왼쪽 아래 설정(톱니) → "연결된 앱" (영문: Apps)
+2. Google Workspace 항목에서 **Google Drive**, **Google Docs** 스위치 켜기. 꺼져 있던 거면 권한 허용 창이 뜸 → 허용
+- **확인**: 두 스위치가 켜짐 상태. (채팅창에 "내 드라이브에 뉴스브리핑 폴더 있어?" 라고 물어 폴더를 찾아내면 연결 성공. 사용량이 0이면 이 질문은 11/5에)
+
+**③ Apps Script 코드 교체 (3분)**
+1. script.google.com → 기존 프로젝트(뉴스브리핑 문서 생성용) 클릭
+2. 왼쪽 파일 목록 `Code.gs` → 편집창 전체 선택(Ctrl+A) → 삭제
+3. GitHub 저장소 → `apps_script/Code.gs` → 오른쪽 위 "Raw" → 전체 선택·복사 → Apps Script 편집창에 붙여넣기
+4. Ctrl+S 저장
+- **확인**: 편집창에서 Ctrl+F 로 `testInbox` 를 찾으면 함수가 보임.
+
+**④ 권한 승인 (2분)**
+1. 편집기 상단 툴바의 함수 선택 드롭다운(기본 `doPost` 또는 `testBuild`) → `testInbox` 선택 → ▶ 실행
+2. "승인 필요" 창 → 권한 검토 → 내 계정 선택 → "Google에서 확인하지 않은 앱" 경고가 뜨면 **고급 → (프로젝트 이름)(으)로 이동(안전하지 않음)** → 허용
+3. 아래 "실행 로그" 패널 확인
+- **확인**: 로그에 `{"ok":false,"error":"not_found"}` 가 찍히면 정상 (아직 문서가 없어서). 빨간 오류가 나오면 ③ 붙여넣기가 잘린 것 → ③ 다시.
+
+**⑤ 새 버전 배포 (1분)** — 이걸 안 하면 옛 코드가 계속 돎
+1. 오른쪽 위 **배포 → 배포 관리**
+2. 기존 배포 옆 연필(✎) → "버전" 드롭다운 → **새 버전** → 배포
+3. "웹 앱 URL" 이 전과 같은지 확인 (같으면 GitHub Secrets 수정 불필요)
+- **확인**: 브라우저 새 탭에 아래 주소를 열면 `{"ok":false,"error":"unauthorized"}` 가 뜸 (secret 없이 호출했으니 당연히 거부. 거부 문구가 나오는 것 자체가 새 코드가 배포됐다는 뜻)
+  `(웹 앱 URL)?mode=inbox&date=2026-11-05`
+  옛 코드면 `"message":"news-brief doc builder..."` 만 나옴.
+
+**⑥ (선택) 내 컴퓨터에서 예행연습 (3분)** — 터미널 필요
+1. 메모장으로 `pipeline/.env` 열어 맨 아래 한 줄 추가: `BRIEF_SOURCE=app` → 저장
+2. 터미널에서 `python pipeline/run_all.py --source app --date 2026-11-05 --strict`
+- **확인**: `[fetch_inbox] 2026-11-05 문서가 아직 없음` 으로 끝나면 연결 정상 (Apps Script까지 갔다 온 것). `unauthorized` 면 `.env`의 `APPS_SCRIPT_SECRET` 과 스크립트 속성 `SECRET` 불일치.
 
 ---
+
+### D-day (11/5, 02:54 사용량 초기화 이후 — 아침에)
+
+> 그날 06:00 자동 실행은 아직 API 방식(`BRIEF_SOURCE` 미설정)으로 돌아 11-05 브리핑이 먼저 생길 수 있음. 정상이며, 아래 ⑩에서 `force` 로 덮어씀.
+
+**⑦ Gemini 앱에서 1회 테스트 (10~20분, 대부분 대기)**
+1. 휴대폰 Gemini 앱(Android 우선) 또는 gemini.google.com → 입력창 위 토글을 **「작업」** 으로
+2. 이 파일 3-A 블록 전체를 복사해 붙여넣기 → 전송
+3. "권한이 필요합니다" 류 카드가 뜨면 허용. 그 외 질문이 오면 "그대로 진행" 이라고 답
+4. 완료 메시지(문서 링크)가 올 때까지 대기
+- **확인 1**: Drive `뉴스브리핑 > inbox` 에 `2026-11-05.json` 문서가 있음
+- **확인 2**: 문서를 열어 맨 위가 `{` 로 시작, 맨 아래가 `}` 로 끝남. "다음은…" 같은 설명 문장·``` 없음
+- **확인 3**: 문서에서 Ctrl+F `"code": "` 가 5번 (eco, pol, soc, intl, tech), `"ref": "` 가 5번
+- 실패 시: 3-D 표의 수정 프롬프트를 같은 작업 대화에 이어서 입력
+
+**⑧ GitHub 변수 등록 (1분)**
+1. github.com → `daily-briefing` 저장소 → **Settings** 탭 → 왼쪽 "Secrets and variables" → **Actions**
+2. 위쪽 탭을 "Secrets" 가 아닌 **"Variables"** 로 → New repository variable
+3. Name `BRIEF_SOURCE` / Value `app` → Add variable
+- **확인**: Variables 목록에 `BRIEF_SOURCE  app` 이 보임. (Secrets 탭에 넣으면 동작 안 함)
+
+**⑨ (이미 ⑥을 했다면 생략) 로컬 `.env` 도 `BRIEF_SOURCE=app`** — 내 컴퓨터에서 돌릴 일이 있을 때만
+
+**⑩ GitHub Actions 수동 실행 (3분)**
+1. 저장소 → **Actions** 탭 → 왼쪽 "daily-brief" → 오른쪽 **Run workflow** 버튼
+2. `date` 칸: `2026-11-05` / `force`: **체크** (06:00에 API로 만든 파일이 있을 수 있으므로) → Run workflow
+3. 30초쯤 뒤 목록에 새 실행이 생김 → 클릭 → "build" → "Run pipeline" 펼치기
+- **확인**: 로그에 순서대로
+  `source=app args= --date 2026-11-05 --force --strict`
+  `[fetch_inbox] 문서: 2026-11-05.json (inbox, ...)`
+  `[fetch_inbox] 저장: ... (총 2N건, top5 5개)`
+  `[enrich] 저장: ...`
+  `[build_doc] 문서 생성: https://docs.google.com/...`
+  그리고 실행 전체가 초록 체크.
+- 실패 시 로그 마지막 줄로 분기:
+  - `문서가 아직 없음` → ⑦ 확인 1 재점검 (이름이 `2026-11-05` 로 시작하는지)
+  - `JSON 파싱 실패` → 실행 페이지 맨 아래 "Artifacts" → `raw-…` 다운로드 → `2026-11-05.inbox.txt` 열어 어디가 깨졌는지 보고 3-D 첫 줄 수정 프롬프트
+  - `unauthorized` → ⑤ 재배포 누락 또는 Secrets 의 `APPS_SCRIPT_SECRET` 불일치
+
+**⑪ 앱 확인 (1분)**
+1. 휴대폰 앱(또는 Pages 주소) 열기 → 당겨서 새로고침
+2. 날짜 탭에 `11/5` 가 있고 핵심 5개·분야 탭이 채워짐
+- **확인**: 맨 아래 작은 글씨에 모델이 `gemini-app` 으로 표시. 상단 「문서」 버튼으로 Google Docs가 열림.
+
+**⑫ 매일 반복 예약 등록 (2분)**
+1. Gemini 앱 작업 모드 → 3-B 블록(첫 줄 + 3-A의 `[목표]`~`[규칙]`) 붙여넣기 → 전송
+2. Gemini 앱 설정(또는 왼쪽 메뉴) → **예약됨** 페이지
+- **확인**: "일일뉴스브리핑" 성격의 작업이 **Active**, 다음 실행 `매일 05:30`.
+
+---
+
+### D+1 (11/6 아침) — 첫 자동 실행 검증
+
+**⑬ 08:40 이후에 확인**
+1. Drive `inbox` 에 `2026-11-06.json` 이 생겼는지, 생성 시각이 몇 시인지 (05:30 예약 대비 지연 정도 파악)
+2. GitHub Actions → daily-brief 목록: 06:00·07:00·08:30 실행 중 하나가 초록, 나머지는 "이미 있음 → 종료" 또는 "대기 중 → 종료"로 초록
+3. 앱에 `11/6` 탭
+- 06:00 실행에 `문서가 아직 없음` 이 찍혀도 **실패 아님** (조용히 종료). 08:30 실행만 빨간색이면 그날 Gemini 작업이 안 돈 것 → Gemini 앱 예약됨 페이지에서 상태 확인 → 일시정지면 재개
+
+**⑭ 품질 비교 (1주일)**
+- 11/1~11/4 (API) 와 11/5~ (앱) 브리핑을 나란히 보고: 분야당 기사 수, sources 링크가 실제 기사로 열리는지, detail 길이
+- 얕으면 3-D 세 번째 행 프롬프트로 조사 강화. 그래도 부족하면 GitHub 변수 `BRIEF_SOURCE` 를 `api` 로 되돌리면 즉시 복귀 (코드 수정 없음)
+
+---
+
+### 완료 후 상태 요약
+
+| 항목 | 값 |
+|---|---|
+| Gemini 앱 예약 | 매일 05:30 KST, 작업 모드, Drive `뉴스브리핑/inbox/날짜.json` |
+| GitHub 변수 | `BRIEF_SOURCE = app` |
+| Actions 시도 | 06:00 / 07:00 / 08:30 KST. 마지막만 실패 알림 |
+| 복귀 방법 | 변수를 `api` 로 (API 키 Secrets 는 그대로 남겨 둠) |
+| 비용 | Gemini API 호출 0회 |
 
 ## 5. 구현 내역 (참고)
 
