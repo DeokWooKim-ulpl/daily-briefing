@@ -45,7 +45,7 @@ function doGet(e) {
       return jsonOut({ ok: false, error: String(err && err.stack || err) });
     }
   }
-  return jsonOut({ ok: true, message: 'news-brief doc builder. POST JSON {secret, brief, force} / GET ?mode=inbox&date=YYYY-MM-DD&secret=...' });
+  return jsonOut({ ok: true, version: CODE_VERSION, message: 'news-brief doc builder. POST JSON {secret, brief, force} / GET ?mode=inbox&date=YYYY-MM-DD&secret=...' });
 }
 
 /* ---------- Gemini 앱(작업 모드) 결과 읽기 ---------- */
@@ -59,34 +59,47 @@ function fileText(file) {
   return file.getBlob().getDataAsString('UTF-8');
 }
 
-/** date(YYYY-MM-DD)로 inbox 문서를 찾는다. 이름이 "YYYY-MM-DD.json" 또는 "YYYY-MM-DD"로 시작하면 인정 */
+const CODE_VERSION = 3;  // GET 응답에 실려 나감. Actions 로그에서 배포 버전 확인용
+
+/** 후보 점수: 3 = 정확히 "YYYY-MM-DD.json", 2 = 날짜로 시작 + .json, 1 = 날짜로 시작(기타), 0 = 제외
+ *  우리 파이프라인이 만드는 "YYYY-MM-DD 뉴스브리핑" 문서는 반드시 제외 */
+function inboxScore(name, date) {
+  if (name.indexOf(date) !== 0) return 0;
+  if (name.indexOf('뉴스브리핑') >= 0) return 0;
+  if (name === date + '.json') return 3;
+  if (/\.json$/i.test(name)) return 2;
+  return 1;
+}
+
+/** date(YYYY-MM-DD)로 Gemini 앱이 저장한 문서를 찾는다. 폴더는 어디든 상관없이 이름 점수 → 최신 수정 순 */
 function findInboxFile(date) {
-  const inbox = getOrCreateFolder(rootFolder(), INBOX_FOLDER_NAME);
-  let best = null;
-  const consider = f => {
+  let best = null, bestScore = 0, where = null;
+  const consider = (f, src) => {
     if (f.isTrashed()) return;
-    const name = f.getName();
-    if (name.indexOf(date) !== 0) return;  // 날짜로 시작하는 이름만
-    if (!best || f.getLastUpdated() > best.getLastUpdated()) best = f;
+    const sc = inboxScore(f.getName(), date);
+    if (sc === 0) return;
+    if (sc > bestScore || (sc === bestScore && f.getLastUpdated() > best.getLastUpdated())) {
+      best = f; bestScore = sc; where = src;
+    }
   };
-  // 1) inbox 폴더 안
+  // 1) 기준 폴더 아래 inbox (ROOT_FOLDER_ID 또는 내 드라이브/뉴스브리핑)
+  const inbox = getOrCreateFolder(rootFolder(), INBOX_FOLDER_NAME);
   const it = inbox.getFiles();
-  while (it.hasNext()) consider(it.next());
-  if (best) return { file: best, where: 'inbox' };
-  // 2) Gemini가 다른 곳에 저장했을 때 대비: 내 드라이브 전체에서 이름으로 검색 (Docs/텍스트만)
+  while (it.hasNext()) consider(it.next(), 'inbox');
+  // 2) 내 드라이브 전체: 이름에 날짜가 들어간 Docs/텍스트 (Gemini 가 다른 "뉴스브리핑/inbox" 등에 저장했을 때)
   const q = "title contains '" + date + "' and trashed = false and (mimeType = 'application/vnd.google-apps.document' or mimeType = 'text/plain' or mimeType = 'application/json')";
   const it2 = DriveApp.searchFiles(q);
-  while (it2.hasNext()) consider(it2.next());
-  return best ? { file: best, where: 'search' } : null;
+  while (it2.hasNext()) consider(it2.next(), 'search');
+  return best ? { file: best, where: where, score: bestScore } : null;
 }
 
 function readInbox(date) {
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'bad_date' };
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, version: CODE_VERSION, error: 'bad_date' };
   const hit = findInboxFile(date);
-  if (!hit) return { ok: false, error: 'not_found', date: date };
+  if (!hit) return { ok: false, version: CODE_VERSION, error: 'not_found', date: date };
   const f = hit.file;
   return {
-    ok: true, date: date, name: f.getName(), url: f.getUrl(), where: hit.where,
+    ok: true, version: CODE_VERSION, date: date, name: f.getName(), url: f.getUrl(), where: hit.where, score: hit.score,
     updated: f.getLastUpdated().toISOString(), text: fileText(f),
   };
 }
@@ -95,7 +108,7 @@ function readInbox(date) {
 function testInbox() {
   const today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
   const r = readInbox(today);
-  Logger.log(JSON.stringify({ ok: r.ok, error: r.error, name: r.name, where: r.where, len: (r.text || '').length }));
+  Logger.log(JSON.stringify({ ok: r.ok, version: r.version, error: r.error, name: r.name, where: r.where, score: r.score, len: (r.text || '').length }));
   if (r.text) Logger.log(r.text.slice(0, 500));
 }
 

@@ -215,7 +215,7 @@ Android 앱에 먼저 적용된 기능이라 웹·iOS에 토글이 없으면 And
 
 | 파일 | 내용 |
 |---|---|
-| `apps_script/Code.gs` | `GET ?mode=inbox&date=YYYY-MM-DD&secret=…` → inbox 문서 본문 반환. `testInbox` 추가 |
+| `apps_script/Code.gs` (v3) | `GET ?mode=inbox&date=YYYY-MM-DD&secret=…` → 폴더 무관하게 `날짜.json` 이름 최우선, 우리 산출물(`날짜 뉴스브리핑`) 제외. 응답에 `version` 포함 |
 | `pipeline/fetch_inbox.py` | 문서에서 JSON 추출(코드펜스·스마트따옴표·후행쉼표·**문자열 안 큰따옴표**·실제 줄바꿈 보정) → 검증 → `research.py` 와 같은 raw 형식 저장 |
 | `pipeline/run_all.py` | `--source auto\|app\|api` (환경변수 `BRIEF_SOURCE`, 기본 auto), `--api-fallback`, `--strict`. auto 는 API 결과를 앱 결과로 교체 |
 | `pipeline/summary.py` | Actions Summary 용 한 줄 보고 (출처·건수·문서 저장 시각) |

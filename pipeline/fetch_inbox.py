@@ -185,7 +185,7 @@ def warn(msg: str) -> None:
 def _build(today: str) -> pathlib.Path:
     """문서 조회 → JSON → raw 저장. 실패는 InboxUnavailable 로 던진다."""
     src = fetch_text(today)
-    log(f"문서: {src.get('name')} ({src.get('where')}, 수정 {src.get('updated')}) {len(src.get('text') or '')}자")
+    log(f"문서: {src.get('name')} ({src.get('where')}, 점수 {src.get('score')}, 수정 {src.get('updated')}, Code.gs v{src.get('version')}) {len(src.get('text') or '')}자")
     RAW_DIR.mkdir(exist_ok=True)
     (RAW_DIR / f"{today}.inbox.txt").write_text(src.get("text") or "", encoding="utf-8")  # 디버그용 원문
     try:
