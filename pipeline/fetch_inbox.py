@@ -42,22 +42,34 @@ def log(msg: str) -> None:
 
 
 # ---------- 1. Apps Script 호출 ----------
-def fetch_text(date: str) -> dict | None:
-    """Apps Script에서 {ok, text, name, url, ...} 를 받는다. 문서가 없으면 None."""
+class InboxUnavailable(Exception):
+    """문서를 쓸 수 없는 모든 경우 (아직 없음 / 설정 오류 / 형식 오류). 메시지에 이유."""
+
+    def __init__(self, reason: str, waiting: bool = False):
+        super().__init__(reason)
+        self.waiting = waiting  # True = "아직 없음" (정상 대기), False = 설정·형식 문제 (경고)
+
+
+def fetch_text(date: str) -> dict:
+    """Apps Script에서 {ok, text, name, url, ...} 를 받는다."""
     url = os.environ.get("APPS_SCRIPT_URL")
     secret = os.environ.get("APPS_SCRIPT_SECRET")
     if not url or not secret:
-        raise SystemExit("APPS_SCRIPT_URL / APPS_SCRIPT_SECRET 환경변수가 없습니다.")
-    r = requests.get(url, params={"mode": "inbox", "date": date, "secret": secret}, timeout=TIMEOUT, allow_redirects=True)
-    r.raise_for_status()
+        raise InboxUnavailable("APPS_SCRIPT_URL / APPS_SCRIPT_SECRET 환경변수가 없음")
     try:
+        r = requests.get(url, params={"mode": "inbox", "date": date, "secret": secret}, timeout=TIMEOUT, allow_redirects=True)
+        r.raise_for_status()
         data = r.json()
+    except requests.RequestException as e:
+        raise InboxUnavailable(f"Apps Script 호출 실패: {e}")
     except ValueError:
-        raise SystemExit(f"Apps Script 응답이 JSON이 아님 (앞 200자): {r.text[:200]}")
+        raise InboxUnavailable(f"Apps Script 응답이 JSON이 아님 (앞 200자): {r.text[:200]}")
     if not data.get("ok"):
         if data.get("error") == "not_found":
-            return None
-        raise SystemExit(f"Apps Script 오류: {data.get('error')}")
+            raise InboxUnavailable(f"{date} 문서가 아직 없음 (Gemini 앱 작업이 안 끝났거나 저장 위치가 다름)", waiting=True)
+        raise InboxUnavailable(f"Apps Script 오류: {data.get('error')}")
+    if "text" not in data:  # 옛 버전 Code.gs (inbox 기능 없음) 가 배포된 상태
+        raise InboxUnavailable("Apps Script가 옛 버전임 — Code.gs 교체 후 '새 버전' 배포 필요")
     return data
 
 
@@ -132,33 +144,42 @@ def normalize(data: dict, date: str, src: dict) -> dict:
     }
 
 
-def main(date: str | None = None, strict: bool = False) -> pathlib.Path | None:
-    today = date or dt.datetime.now(KST).strftime("%Y-%m-%d")
-    log(f"날짜 {today}: Drive inbox 문서 조회")
-    src = fetch_text(today)
-    if src is None:
-        msg = f"{today} 문서가 아직 없음 (Gemini 앱 작업이 안 끝났거나 저장 위치가 다름)"
-        if strict:
-            raise SystemExit(msg)
-        log(msg + " → 이번 회차 건너뜀")
-        return None
-    log(f"문서: {src.get('name')} ({src.get('where')}, 수정 {src.get('updated')}) {len(src.get('text') or '')}자")
+def warn(msg: str) -> None:
+    """GitHub Actions 에서는 실행 요약에 노란 경고로 표시된다."""
+    print(f"::warning::[fetch_inbox] {msg}", flush=True)
 
+
+def _build(today: str) -> pathlib.Path:
+    """문서 조회 → JSON → raw 저장. 실패는 InboxUnavailable 로 던진다."""
+    src = fetch_text(today)
+    log(f"문서: {src.get('name')} ({src.get('where')}, 수정 {src.get('updated')}) {len(src.get('text') or '')}자")
     RAW_DIR.mkdir(exist_ok=True)
     (RAW_DIR / f"{today}.inbox.txt").write_text(src.get("text") or "", encoding="utf-8")  # 디버그용 원문
     try:
         data = extract_json(src.get("text") or "")
     except ValueError as e:
-        raise SystemExit(f"{e} — 원문은 pipeline/raw/{today}.inbox.txt 참고")
-
+        raise InboxUnavailable(f"{e} — 원문은 Actions 아티팩트 raw/{today}.inbox.txt 참고")
     payload = normalize(data, today, src)
     total = sum(len(c["items"]) for c in payload["categories"])
+    if total == 0:
+        raise InboxUnavailable("문서에 뉴스 항목이 하나도 없음")
     out = RAW_DIR / f"{today}.json"
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     log(f"저장: {out} (총 {total}건, top5 {len(payload['synthesis']['top5'])}개)")
-    if total == 0:
-        raise SystemExit("문서에 뉴스 항목이 하나도 없습니다.")
     return out
+
+
+def main(date: str | None = None, strict: bool = False) -> pathlib.Path | None:
+    """성공: raw 경로. 사용 불가: None (strict 면 SystemExit). '아직 없음'은 로그만, 그 외는 경고."""
+    today = date or dt.datetime.now(KST).strftime("%Y-%m-%d")
+    log(f"날짜 {today}: Drive inbox 문서 조회")
+    try:
+        return _build(today)
+    except InboxUnavailable as e:
+        if strict:
+            raise SystemExit(str(e))
+        (log if e.waiting else warn)(f"{e} → 이번 회차 건너뜀")
+        return None
 
 
 if __name__ == "__main__":

@@ -298,7 +298,8 @@
     el.badge.hidden = !b.sample;
     el.docLink.hidden = !b.doc_url;
     if (b.doc_url) el.docLink.href = b.doc_url;
-    el.meta.textContent = `생성 ${(b.generated_at || "").replace("T", " ").slice(0, 16)}${b.model ? " · " + b.model : ""}`;
+    const savedAt = b.doc_saved_at ? ` · 앱 문서 ${kstHM(b.doc_saved_at)}` : "";
+    el.meta.textContent = `생성 ${(b.generated_at || "").replace("T", " ").slice(0, 16)}${b.model ? " · " + b.model : ""}${savedAt}`;
   }
 
   async function go(date, tab, focusId) {
@@ -317,6 +318,14 @@
     } catch (e) {
       el.main.innerHTML = `<p class="status">불러오지 못했습니다: ${esc(e.message)}</p>`;
     }
+  }
+
+  function kstHM(iso) {  // ISO 시각 → "11/05 05:52" (KST)
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    const p = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d);
+    const g = (t) => (p.find((x) => x.type === t) || {}).value;
+    return `${g("month")}/${g("day")} ${g("hour")}:${g("minute")}`;
   }
 
   // ---------- 테마 (밝게/어둡게) ----------

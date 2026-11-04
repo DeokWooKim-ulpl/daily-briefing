@@ -224,6 +224,7 @@ def build_brief(raw: dict, use_network: bool, sample: bool) -> Brief:
         top5=top5,
         connections=connections,
         categories=[CategoryBlock(**c) for c in categories],
+        doc_saved_at=(raw.get("source_doc") or {}).get("updated"),
     )
 
 

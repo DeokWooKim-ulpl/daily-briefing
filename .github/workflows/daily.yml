@@ -2,10 +2,15 @@ name: daily-brief
 
 on:
   schedule:
-    # 당일 파일이 이미 있으면 바로 종료하므로 여러 번 걸어도 안전
-    - cron: "0 21 * * *"    # 06:00 KST (api 모드 본 실행 / app 모드 1차 확인)
-    - cron: "0 22 * * *"    # 07:00 KST 재시도
-    - cron: "30 23 * * *"   # 08:30 KST 마지막 재시도 (app 모드: 문서 없으면 실패로 알림)
+    # auto 모드: 매 회차 Gemini 앱이 Drive 에 남긴 문서를 찾고, 있으면 생성 후 종료.
+    # 없으면 조용히 종료(대기). 08:30 회차만 API 로 대체 생성. 그 뒤 회차는 늦게 온 앱 문서로 교체.
+    # 할 일이 없는 회차는 20초 안에 끝나므로 여러 번 걸어도 비용 없음.
+    - cron: "0 21 * * *"    # 06:00 KST
+    - cron: "0 22 * * *"    # 07:00 KST
+    - cron: "30 23 * * *"   # 08:30 KST  ← API 대체 생성 회차 (BRIEF_SOURCE=app 이면 대체 안 함)
+    - cron: "30 0 * * *"    # 09:30 KST
+    - cron: "30 1 * * *"    # 10:30 KST
+    - cron: "0 3 * * *"     # 12:00 KST
   workflow_dispatch:
     inputs:
       date:
@@ -15,6 +20,11 @@ on:
         description: "이미 있어도 다시 생성"
         type: boolean
         default: false
+      source:
+        description: "auto: 앱 문서 우선, 없으면 API / app: 앱 문서만(없으면 실패) / api: API 만"
+        type: choice
+        options: [auto, app, api]
+        default: auto
 
 permissions:
   contents: write
@@ -42,22 +52,39 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
-          BRIEF_SOURCE: ${{ vars.BRIEF_SOURCE || 'api' }}   # Settings → Variables 에 BRIEF_SOURCE=app 넣으면 Gemini 앱 모드
-          LAST_SCHEDULE: ${{ github.event.schedule == '30 23 * * *' }}
+          # 수동 실행의 source 선택 > 저장소 변수 BRIEF_SOURCE > 기본 auto
+          BRIEF_SOURCE: ${{ github.event.inputs.source || vars.BRIEF_SOURCE || 'auto' }}
+          FALLBACK_SLOT: ${{ github.event.schedule == '30 23 * * *' }}
           APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
           APPS_SCRIPT_SECRET: ${{ secrets.APPS_SCRIPT_SECRET }}
           DATE_ARG: ${{ github.event.inputs.date }}
           FORCE_ARG: ${{ github.event.inputs.force }}
         run: |
-          ARGS=""
+          ARGS="--source $BRIEF_SOURCE"
           [ -n "$DATE_ARG" ] && ARGS="$ARGS --date $DATE_ARG"
           [ "$FORCE_ARG" = "true" ] && ARGS="$ARGS --force"
-          # app 모드: 마지막 예약 회차나 수동 실행에서는 문서가 없으면 실패로 알림
-          if [ "$BRIEF_SOURCE" = "app" ] && { [ "$LAST_SCHEDULE" = "true" ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; }; then
+          # auto: 08:30 회차와 수동 실행은 앱 문서가 없으면 API 로 대체
+          if [ "$BRIEF_SOURCE" = "auto" ] && { [ "$FALLBACK_SLOT" = "true" ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; }; then
+            ARGS="$ARGS --api-fallback"
+          fi
+          # app: 수동 실행은 문서가 없으면 실패로 알림 (예약 회차는 조용히 대기)
+          if [ "$BRIEF_SOURCE" = "app" ] && [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             ARGS="$ARGS --strict"
           fi
-          echo "source=$BRIEF_SOURCE args=$ARGS"
-          python pipeline/run_all.py $ARGS
+          echo "args=$ARGS"
+          set -o pipefail
+          python pipeline/run_all.py $ARGS 2>&1 | tee pipeline/run.log
+
+      - name: 실행 요약
+        if: always()
+        env:
+          DATE_ARG: ${{ github.event.inputs.date }}
+        run: |
+          ARGS=""; [ -n "$DATE_ARG" ] && ARGS="--date $DATE_ARG"
+          {
+            python pipeline/summary.py $ARGS
+            echo; echo '```'; tail -n 15 pipeline/run.log 2>/dev/null; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload raw output (debug, 7 days)
         if: always()

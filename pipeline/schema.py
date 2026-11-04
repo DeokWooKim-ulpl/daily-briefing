@@ -134,3 +134,4 @@ class Brief(BaseModel):
     connections: List[Connection] = Field(default_factory=list)
     categories: List[CategoryBlock] = Field(default_factory=list)
     doc_url: Optional[str] = None
+    doc_saved_at: Optional[str] = None  # Gemini 앱 문서가 Drive 에 저장된 시각 (app 모드일 때만)
