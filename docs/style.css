@@ -40,6 +40,7 @@
   --top: #ffb547;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -105,7 +106,22 @@ button { font: inherit; }
 }
 .dates button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 600; }
 .tabs button.on { color: var(--fg); border-color: var(--c, var(--accent)); background: color-mix(in srgb, var(--c, var(--accent)) 18%, var(--bg2)); font-weight: 600; }
-.tabs button .n { color: var(--fg3); font-size: 12px; margin-left: 4px; }
+.tabs button .n, .dates button .n { color: var(--fg3); font-size: 12px; margin-left: 4px; }
+.dates button.past { border-style: dashed; }
+.dates button.past.on { border-style: solid; }
+.dates button.on .n { color: var(--bg); opacity: .7; }
+
+/* ---------- 지난 브리핑 ---------- */
+.archive { padding: 0 var(--pad); }
+.weeklist { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 6px; }
+.weeklist button {
+  width: 100%; text-align: left; display: flex; align-items: baseline; gap: 10px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; color: var(--fg); cursor: pointer;
+}
+.weeklist button:hover { border-color: var(--accent); }
+.weeklist .d { font-weight: 600; }
+.weeklist .full { color: var(--fg3); font-size: 12px; margin-left: auto; }
 
 /* ---------- main ---------- */
 .main { max-width: 640px; margin: 0 auto; padding: 4px var(--pad) 24px; }

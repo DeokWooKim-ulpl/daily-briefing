@@ -13,7 +13,7 @@
     themeSwitch: $("#themeSwitch"),
   };
 
-  const state = { dates: [], date: null, brief: null, tab: "top", open: new Set() };
+  const state = { dates: [], date: null, brief: null, tab: "top", open: new Set(), view: "brief" };
 
   // ---------- data ----------
   async function getJSON(path) {
@@ -44,19 +44,19 @@
   // ---------- routing ----------
   function readHash() {
     const m = location.hash.replace(/^#/, "").split("/");
+    if (m[0] === "archive") return { archive: true, date: null, tab: null };
     return { date: /^\d{4}-\d{2}-\d{2}$/.test(m[0]) ? m[0] : null, tab: m[1] || null };
   }
-  function writeHash() {
+  function writeHash(push) {
     const h = `#${state.date}/${state.tab}`;
-    if (location.hash !== h) history.replaceState(null, "", h);
+    if (location.hash !== h) (push ? history.pushState : history.replaceState).call(history, null, "", h);
   }
 
   // ---------- render helpers ----------
-  function fmtDate(d) {
-    const dt = new Date(d + "T00:00:00+09:00");
-    const today = new Date();
-    const diff = Math.round((new Date(today.toDateString()) - new Date(dt.toDateString())) / 86400000);
-    const base = `${dt.getMonth() + 1}/${dt.getDate()} (${WEEK[dt.getDay()]})`;
+  function fmtDate(d) {  // 브라우저 시간대와 무관하게 KST 날짜 그대로 표시
+    const dt = new Date(d + "T00:00:00Z");
+    const diff = Math.round((new Date(todayKST() + "T00:00:00Z") - dt) / 86400000);
+    const base = `${dt.getUTCMonth() + 1}/${dt.getUTCDate()} (${WEEK[dt.getUTCDay()]})`;
     return diff === 0 ? `오늘 ${base}` : diff === 1 ? `어제 ${base}` : base;
   }
   function chip(code, label) {
@@ -83,17 +83,105 @@
   }
 
   // ---------- header ----------
+  // ---------- 주 단위 (일요일 시작, KST) ----------
+  function todayKST() {
+    return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  }
+  function weekStart(d) {  // "YYYY-MM-DD" → 그 주 일요일 "YYYY-MM-DD"
+    const dt = new Date(d + "T00:00:00Z");
+    dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay());
+    return dt.toISOString().slice(0, 10);
+  }
+  function addDays(d, n) {
+    const dt = new Date(d + "T00:00:00Z");
+    dt.setUTCDate(dt.getUTCDate() + n);
+    return dt.toISOString().slice(0, 10);
+  }
+  function shortDate(d) {
+    const dt = new Date(d + "T00:00:00Z");
+    return `${dt.getUTCMonth() + 1}/${dt.getUTCDate()}(${WEEK[dt.getUTCDay()]})`;
+  }
+  function thisWeekDates() {
+    const ws = weekStart(todayKST());
+    return state.dates.filter((d) => d >= ws);
+  }
+  function pastDates() {
+    const ws = weekStart(todayKST());
+    return state.dates.filter((d) => d < ws);
+  }
+
   function renderDates() {
     el.dates.innerHTML = "";
-    for (const d of state.dates) {
+    const week = thisWeekDates();
+    const shown = [...week];
+    // 지난 날짜를 보고 있으면 그 날짜 칩도 함께 표시
+    if (state.view === "brief" && state.date && !shown.includes(state.date)) shown.push(state.date);
+    for (const d of shown) {
       const b = document.createElement("button");
       b.textContent = fmtDate(d);
-      b.className = d === state.date ? "on" : "";
+      b.className = state.view === "brief" && d === state.date ? "on" : "";
       b.onclick = () => go(d, state.tab);
+      el.dates.appendChild(b);
+    }
+    const past = pastDates();
+    if (past.length) {
+      const b = document.createElement("button");
+      b.innerHTML = `지난 브리핑<span class="n">${past.length}</span>`;
+      b.className = "past" + (state.view === "archive" ? " on" : "");
+      b.onclick = goArchive;
       el.dates.appendChild(b);
     }
     const on = $(".on", el.dates);
     if (on) on.scrollIntoView({ inline: "center", block: "nearest" });
+  }
+
+  // ---------- 지난 브리핑 (주 단위 묶음) ----------
+  function renderArchive() {
+    const wrap = document.createElement("section");
+    wrap.className = "archive";
+    const past = pastDates();
+    if (!past.length) {
+      wrap.innerHTML = '<p class="status">지난 브리핑이 없습니다.</p>';
+      return wrap;
+    }
+    const groups = new Map();  // weekStart → dates(desc)
+    for (const d of past) {
+      const ws = weekStart(d);
+      if (!groups.has(ws)) groups.set(ws, []);
+      groups.get(ws).push(d);
+    }
+    for (const [ws, dates] of groups) {
+      const h = document.createElement("h2");
+      h.className = "sect";
+      h.textContent = `${shortDate(ws)} ~ ${shortDate(addDays(ws, 6))} · ${dates.length}일`;
+      wrap.appendChild(h);
+      const ul = document.createElement("ul");
+      ul.className = "weeklist";
+      for (const d of dates) {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.innerHTML = `<span class="d">${esc(shortDate(d))}</span><span class="full">${esc(d)}</span>`;
+        b.onclick = () => go(d, "top");
+        li.appendChild(b);
+        ul.appendChild(li);
+      }
+      wrap.appendChild(ul);
+    }
+    return wrap;
+  }
+
+  function goArchive() {
+    state.view = "archive";
+    if (location.hash !== "#archive") history.pushState(null, "", "#archive");
+    renderDates();
+    el.tabs.hidden = true;
+    el.badge.hidden = true;
+    el.docLink.hidden = true;
+    el.meta.textContent = `지난 브리핑 ${pastDates().length}일치 · 이번 주는 상단 날짜에서`;
+    el.main.innerHTML = "";
+    el.main.appendChild(renderArchive());
+    window.scrollTo(0, 0);
   }
 
   function renderTabs() {
@@ -304,13 +392,16 @@
 
   async function go(date, tab, focusId) {
     try {
+      const fromArchive = state.view === "archive";
+      state.view = "brief";
+      el.tabs.hidden = false;
       if (date !== state.date) {
         el.status.textContent = "불러오는 중…";
         await loadBrief(date);
       }
       const valid = ["top", ...state.brief.categories.map((c) => c.code)];
       state.tab = valid.includes(tab) ? tab : "top";
-      writeHash();
+      writeHash(fromArchive);
       renderDates();
       renderTabs();
       renderChrome();
@@ -360,12 +451,14 @@
       const h = readHash();
       const date = h.date && state.dates.includes(h.date) ? h.date : state.dates[0];
       await go(date, h.tab || "top");
+      if (h.archive) goArchive();
     } catch (e) {
       el.status.textContent = `불러오지 못했습니다: ${e.message}`;
     }
     window.addEventListener("hashchange", () => {
       const h = readHash();
-      if (h.date && (h.date !== state.date || h.tab !== state.tab)) go(h.date, h.tab || "top");
+      if (h.archive) { if (state.view !== "archive") goArchive(); return; }
+      if (h.date && (h.date !== state.date || h.tab !== state.tab || state.view !== "brief")) go(h.date, h.tab || "top");
     });
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});

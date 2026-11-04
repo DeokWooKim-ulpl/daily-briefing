@@ -1,5 +1,5 @@
 /* 서비스워커: 앱 껍데기는 캐시 우선, 데이터(JSON)는 네트워크 우선 + 오프라인 폴백 */
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./style.css", "./manifest.json", "./icons/icon-192.png"];

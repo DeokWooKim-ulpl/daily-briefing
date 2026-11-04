@@ -356,6 +356,7 @@ python pipeline/run_all.py --source app --date 2026-11-05 --strict    # 문서 �
 | 실행 시각 | `.github/workflows/daily.yml`의 `cron: "0 21 * * *"`. UTC 기준이라 한국 시간 −9시간 (05:00 KST면 `0 20`) |
 | 앱 색·글자 크기 | `docs/style.css` 맨 위 `:root` 변수 |
 | 앱 탭 이름 | `docs/app.js` 맨 위 `CAT_LABEL` |
+| 상단 날짜 바 | 이번 주(일요일 시작)만 표시, 그 전 날짜는 「지난 브리핑」 탭에 주 단위로 묶임. 데이터·Google Docs는 삭제되지 않음. 주 시작 요일은 `docs/app.js`의 `weekStart` |
 
 프롬프트나 스키마를 고친 뒤에는 **단계 1-4**로 한 번 돌려보고 GitHub에 올리면(커밋·푸시) 다음 날부터 반영됩니다.
 
