@@ -199,7 +199,10 @@ Android 앱에 먼저 적용된 기능이라 웹·iOS에 토글이 없으면 And
 - 앱에서 확인: 당겨서 새로고침 → 하단에 `gemini-app · 앱 문서 11/05 hh:mm`.
 
 **F. 매일 반복 예약 (2분)** — E 가 성공한 뒤
-1. 작업 모드 → 3-B 블록(첫 줄 + 3-A 의 `[목표]`~`[규칙]`) 붙여넣기 → 전송
+1. 작업 모드 → 아래 한 줄 입력 (11/4 Gemini 가 지침을 `daily-news-briefing` 이름으로 저장해 둠). 안 먹으면 3-B 블록(첫 줄 + 3-A 의 `[목표]`~`[규칙]`) 전체를 붙여넣기
+   ```
+   매일 오전 5시 30분(한국 시간)에 'daily-news-briefing' 지침을 실행하는 반복 작업을 예약해 줘. 매번 내 확인 없이 끝까지 진행하고, 실패하면 이유만 알려 줘.
+   ```
 2. Gemini 앱 **예약됨** 페이지에 Active, 매일 05:30
 - 확인: 다음 날 아침 앱 하단이 `gemini-app` 이면 끝. `gemini-3.8-flash` 면 그날은 Gemini 가 08:30까지 문서를 못 만든 것 → 예약됨 페이지에서 상태(일시정지 여부) 확인.
 
@@ -213,13 +216,13 @@ Android 앱에 먼저 적용된 기능이라 웹·iOS에 토글이 없으면 And
 | 파일 | 내용 |
 |---|---|
 | `apps_script/Code.gs` | `GET ?mode=inbox&date=YYYY-MM-DD&secret=…` → inbox 문서 본문 반환. `testInbox` 추가 |
-| `pipeline/fetch_inbox.py` | 문서에서 JSON 추출(코드펜스·스마트따옴표·후행쉼표 보정) → 검증 → `research.py` 와 같은 raw 형식 저장 |
+| `pipeline/fetch_inbox.py` | 문서에서 JSON 추출(코드펜스·스마트따옴표·후행쉼표·**문자열 안 큰따옴표**·실제 줄바꿈 보정) → 검증 → `research.py` 와 같은 raw 형식 저장 |
 | `pipeline/run_all.py` | `--source auto\|app\|api` (환경변수 `BRIEF_SOURCE`, 기본 auto), `--api-fallback`, `--strict`. auto 는 API 결과를 앱 결과로 교체 |
 | `pipeline/summary.py` | Actions Summary 용 한 줄 보고 (출처·건수·문서 저장 시각) |
 | `pipeline/schema.py`, `enrich.py`, `docs/app.js` | `doc_saved_at` (Gemini 문서 저장 시각) 저장·앱 하단 표시 |
 | `.github/workflows/daily.yml` | 06:00·07:00·08:30·09:30·10:30·12:00 KST. 08:30 만 API 대체. 수동 실행에 `source` 선택칸 |
 
-검증: 모의 Apps Script 서버로 8경로 통과 (대기 / API 대체 분기 / API→앱 교체 / 이미 앱 결과 / 옛 Code.gs / strict 실패 / secret 불일치 / 코드펜스 혼입) (2026-11-03). 실제 Gemini 앱 출력과 Apps Script 재배포는 11월 5일 확인 필요.
+검증: 11/4 Gemini 앱이 실제로 만든 `inbox/2026-11-04.json` 확인 — 21건, 순수 JSON이지만 기사 제목 3곳에 이스케이프 안 된 큰따옴표(`"李 "국가 미래…"…"`)가 있어 표준 파서로는 실패 → 보정 3단계 추가 후 통과. 모의 Apps Script 서버로 8경로 통과 (대기 / API 대체 분기 / API→앱 교체 / 이미 앱 결과 / 옛 Code.gs / strict 실패 / secret 불일치 / 코드펜스 혼입) (2026-11-03). 실제 Gemini 앱 출력과 Apps Script 재배포는 11월 5일 확인 필요.
 
 ---
 

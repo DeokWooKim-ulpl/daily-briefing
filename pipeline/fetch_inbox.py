@@ -77,23 +77,56 @@ def fetch_text(date: str) -> dict:
 _FENCE = re.compile(r"```[a-zA-Z]*\s*|```", re.M)
 
 
+def repair_quotes(body: str) -> str:
+    """문자열 안에 이스케이프 안 된 큰따옴표가 있으면 \\" 로 바꾼다.
+    (예: "title": "李 "국가 미래…"…당부")  — Gemini 앱이 규칙을 어기고 자주 내는 오류.
+    판정: 문자열 안에서 만난 " 다음에 공백을 건너뛴 첫 글자가 , } ] : 이면 닫는 따옴표, 아니면 내부 따옴표."""
+    out, in_str, i, n = [], False, 0, len(body)
+    while i < n:
+        ch = body[i]
+        if not in_str:
+            if ch == '"':
+                in_str = True
+            out.append(ch)
+        elif ch == "\\":  # 이스케이프 시퀀스는 그대로 두 글자 복사
+            out.append(body[i : i + 2])
+            i += 1
+        elif ch == '"':
+            k = i + 1
+            while k < n and body[k] in " \t\r\n":
+                k += 1
+            if k >= n or body[k] in ",}]:":
+                in_str = False
+                out.append(ch)
+            else:
+                out.append('\\"')
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def extract_json(text: str) -> dict:
-    """코드펜스·머리말이 섞여 있어도 첫 '{' ~ 마지막 '}' 만 잘라 파싱한다."""
+    """코드펜스·머리말이 섞여 있어도 첫 '{' ~ 마지막 '}' 만 잘라 파싱한다. 흔한 형식 오류는 단계적으로 보정."""
     t = _FENCE.sub("", text).replace(" ", " ").strip()
     i, j = t.find("{"), t.rfind("}")
     if i < 0 or j <= i:
         raise ValueError("본문에 JSON 객체({ ... })가 없음")
     body = t[i : j + 1]
-    try:
-        return json.loads(body)
-    except json.JSONDecodeError as e1:
-        # 2차: 스마트 따옴표·후행 쉼표 정리 후 재시도
-        fixed = body.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
-        fixed = re.sub(r",\s*([}\]])", r"\1", fixed)
+    # 1차: 그대로 / 2차: 스마트 따옴표·후행 쉼표 정리 / 3차: 문자열 안 큰따옴표 이스케이프
+    fixed = body.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    fixed = re.sub(r",\s*([}\]])", r"\1", fixed)
+    attempts = [body, fixed, repair_quotes(fixed)]
+    first_err = None
+    for k, cand in enumerate(attempts, start=1):
         try:
-            return json.loads(fixed)
-        except json.JSONDecodeError:
-            raise ValueError(f"JSON 파싱 실패: {e1}") from e1
+            data = json.loads(cand, strict=False)  # strict=False: 문자열 안 실제 줄바꿈 허용
+            if k > 1:
+                log(f"JSON 보정 {k}단계로 파싱 성공")
+            return data
+        except json.JSONDecodeError as e:
+            first_err = first_err or e
+    raise ValueError(f"JSON 파싱 실패: {first_err}")
 
 
 # ---------- 3. research.py raw 형식으로 정규화 ----------
