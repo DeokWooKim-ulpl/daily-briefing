@@ -125,7 +125,7 @@ Android 앱에 먼저 적용된 기능이라 웹·iOS에 토글이 없으면 And
 1. Drive `뉴스브리핑/inbox/` 에 `오늘날짜.json` 문서가 생겼는지
 2. 본문이 `{` 로 시작해 `}` 로 끝나고, 코드펜스·설명문이 없는지
 3. 카테고리 5개 · top5 5개 · sources의 URL이 실제 기사인지
-4. GitHub 변수 `BRIEF_SOURCE=app` 등록 (4절) → Actions → daily-brief → **Run workflow** → 앱에 오늘 날짜가 뜨는지
+4. 그 다음은 자동: 다음 Actions 회차가 문서를 발견해 앱 결과로 바꿈. 바로 보려면 Actions → daily-brief → Run workflow (기본값 auto 그대로)
 
 ### 3-B. 매일 반복 예약 (3-A 통과 후)
 
